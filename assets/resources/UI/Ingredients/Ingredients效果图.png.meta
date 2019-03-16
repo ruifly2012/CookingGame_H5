@@ -1,0 +1,31 @@
+{
+  "ver": "2.2.0",
+  "uuid": "9195e66c-b252-439e-b6c8-81b709415dc6",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "subMetas": {
+    "Ingredients效果图": {
+      "ver": "1.0.3",
+      "uuid": "6850f6f8-f14b-44b1-9c10-4dde161e5406",
+      "rawTextureUuid": "9195e66c-b252-439e-b6c8-81b709415dc6",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 484,
+      "height": 861,
+      "rawWidth": 484,
+      "rawHeight": 861,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

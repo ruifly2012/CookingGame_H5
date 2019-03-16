@@ -1,0 +1,31 @@
+{
+  "ver": "2.2.0",
+  "uuid": "54e885b0-9c9f-4293-b645-dc08db98c914",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "subMetas": {
+    "Map details_xiao kuang": {
+      "ver": "1.0.3",
+      "uuid": "2acec39f-4935-40a6-b940-a27b0c0e549c",
+      "rawTextureUuid": "54e885b0-9c9f-4293-b645-dc08db98c914",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 76,
+      "height": 76,
+      "rawWidth": 76,
+      "rawHeight": 76,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "__type__": "cc.AnimationClip",
+  "_name": "LogAnim",
+  "_objFlags": 0,
+  "_native": "",
+  "_duration": 0.8571428571428571,
+  "sample": 35,
+  "speed": 1,
+  "wrapMode": 1,
+  "curveData": {
+    "props": {
+      "y": [
+        {
+          "frame": 0,
+          "value": -550
+        },
+        {
+          "frame": 0.5714285714285714,
+          "value": -500
+        }
+      ],
+      "opacity": [
+        {
+          "frame": 0.5714285714285714,
+          "value": 255
+        },
+        {
+          "frame": 0.8571428571428571,
+          "value": 0
+        }
+      ]
+    }
+  },
+  "events": []
+}

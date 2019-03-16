@@ -1,0 +1,31 @@
+{
+  "ver": "2.2.0",
+  "uuid": "e12ca20b-33db-4769-888d-364a8ed9a87b",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "subMetas": {
+    "car效果图": {
+      "ver": "1.0.3",
+      "uuid": "9975f355-8840-47e9-908f-9ac1df1e9cf5",
+      "rawTextureUuid": "e12ca20b-33db-4769-888d-364a8ed9a87b",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 400,
+      "height": 711,
+      "rawWidth": 400,
+      "rawHeight": 711,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

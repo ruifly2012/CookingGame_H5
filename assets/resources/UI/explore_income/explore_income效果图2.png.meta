@@ -1,0 +1,31 @@
+{
+  "ver": "2.2.0",
+  "uuid": "dbac3204-9946-4799-a8d8-495e83552dbd",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "subMetas": {
+    "explore_income效果图2": {
+      "ver": "1.0.3",
+      "uuid": "b7f3d11e-4b33-4288-a844-aafcd721440b",
+      "rawTextureUuid": "dbac3204-9946-4799-a8d8-495e83552dbd",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 493,
+      "height": 869,
+      "rawWidth": 493,
+      "rawHeight": 869,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "ver": "2.2.0",
+  "uuid": "4be0c3bd-0e53-459f-b5a5-be24c8d7cea9",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "subMetas": {
+    "腻害的人效果图": {
+      "ver": "1.0.3",
+      "uuid": "1ef1a04f-9ede-4abe-b3d5-9cb1660e1b00",
+      "rawTextureUuid": "4be0c3bd-0e53-459f-b5a5-be24c8d7cea9",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 477,
+      "height": 840,
+      "rawWidth": 477,
+      "rawHeight": 840,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "ver": "2.2.0",
+  "uuid": "2ee0c14d-4677-4ead-852d-2eb26d7458b5",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "subMetas": {
+    "Map details效果图2": {
+      "ver": "1.0.3",
+      "uuid": "b7a74411-ffab-4796-a2a2-8f3e1e28c4c9",
+      "rawTextureUuid": "2ee0c14d-4677-4ead-852d-2eb26d7458b5",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 496,
+      "height": 874,
+      "rawWidth": 496,
+      "rawHeight": 874,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

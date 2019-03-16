@@ -1,0 +1,31 @@
+{
+  "ver": "2.2.0",
+  "uuid": "d075adaf-fe71-4c69-91c6-add3d7f20e9c",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "subMetas": {
+    "xiao kuang 52": {
+      "ver": "1.0.3",
+      "uuid": "d5e473a0-3e83-487f-98dc-003d380e199d",
+      "rawTextureUuid": "d075adaf-fe71-4c69-91c6-add3d7f20e9c",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 70,
+      "height": 71,
+      "rawWidth": 70,
+      "rawHeight": 71,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

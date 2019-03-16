@@ -1,0 +1,31 @@
+{
+  "ver": "2.2.0",
+  "uuid": "dd07470a-71c7-4db2-a3ec-85414e1784fd",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "subMetas": {
+    "explore_income_digital_buttom": {
+      "ver": "1.0.3",
+      "uuid": "edea2e50-4f93-43a8-9de2-8fc98c56505c",
+      "rawTextureUuid": "dd07470a-71c7-4db2-a3ec-85414e1784fd",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 0,
+      "trimY": 0,
+      "width": 86,
+      "height": 25,
+      "rawWidth": 86,
+      "rawHeight": 25,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}

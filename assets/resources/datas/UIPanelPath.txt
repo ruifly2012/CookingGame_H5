@@ -1,0 +1,8 @@
+﻿LobbyPanel,prefabs/ui_panel/LobbyPanel
+RolePanel,prefabs/ui_panel/RolePanel
+WarehousePanel,prefabs/ui_panel/Warehouse_Panel
+SelectPanel,prefabs/ui_panel/Select_Panel
+OnHookPanel,prefabs/ui_panel/onhookPanel
+CookingPanel,prefabs/ui_panel/CookingPanel
+MissionPanel,prefabs/ui_panel/MissionPanel
+TreasureBox,prefabs/ui_panel/TreasureBox
