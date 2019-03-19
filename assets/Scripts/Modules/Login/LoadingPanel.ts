@@ -1,4 +1,6 @@
 import { AssetManager } from "../../Managers/AssetManager";
+import { Facade } from "../../MVC/Patterns/Facade/Facade";
+import { LoadingMediator } from "./LoadingMediator";
 
 const {ccclass, property} = cc._decorator;
 
@@ -16,6 +18,7 @@ export default class LoadingPanel extends cc.Component
     onLoad () 
 	{
         this.progressBar.progress=0;
+        Facade.getInstance().registerMediator(new LoadingMediator(this));
     }
 
     start () 

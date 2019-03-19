@@ -6,6 +6,7 @@ import { LoginEvent } from "../../Events/LoginEvent";
 import { AccountVo } from "./AccountVo";
 import { LoginManager } from "./LoginManager";
 import { NetAccountInfo } from "../../NetWork/NetMessage/NetAccountInfo";
+import NotificationView from "../../Common/NotificationView";
 
 
 /**
@@ -30,6 +31,7 @@ export class LoginMediator extends Mediator
         let info: NetAccountInfo = LoginManager.getInstance().getUserConfig();
         if(info==null) return ;
         this.getViewComponent().userInput.string = info.username;
+        this.getViewComponent().passwordInput.string=info.password;
         this.getViewComponent().passwordInput.node.active = false;
         this.getViewComponent().startGameBtn.getComponentInChildren(cc.Label).string = '开始游戏';
     }
@@ -42,6 +44,8 @@ export class LoginMediator extends Mediator
     {
         return [
             LoginEvent.USER_CONFIG,
+            LoginEvent.SUCCESS,
+            LoginEvent.FAIL
         ];
     }
 
@@ -59,6 +63,12 @@ export class LoginMediator extends Mediator
                 this.getViewComponent().userInput.string = info.username;
                 this.getViewComponent().passwordInput.node.active = false;
                 this.getViewComponent().startGameBtn.getComponentInChildren(cc.Label).string = '开始游戏';
+                break;
+            case LoginEvent.SUCCESS:
+                this.getViewComponent().node.destroy();
+                break;
+            case LoginEvent.FAIL:
+                NotificationView.Instance.showNotify('提示','网络错误');
                 break;
 
             default:

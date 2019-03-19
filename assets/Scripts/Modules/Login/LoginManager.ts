@@ -25,59 +25,86 @@ export class LoginManager {
         return LoginManager.instance;
     }
 
+    accountInfo:NetAccountInfo=new NetAccountInfo();
+
     init()
     {
         
     }
 
-    getUserConfig():NetAccountInfo
-    {
-        let accountInfo:NetAccountInfo=new NetAccountInfo();
-        if(GameStorage.getItemJson('UserConfig')!=null)
-        {
-            accountInfo=Object.assign(new NetAccountInfo(),GameStorage.getItemJson('UserConfig'));
-           
-            return accountInfo;
-        }
-        return null;
+    
 
-    }
-
+    /** 
+     * 请求登录
+    */
     requestLoginAccount(_vo:AccountVo)
     {
         let accout:NetAccountInfo=new NetAccountInfo();
-        accout.username='xiaoming';
-        accout.password='123456';
+        accout.username=_vo.user;
+        accout.password=_vo.password;
+        this.accountInfo=accout;
         if(GameStorage.getItem(NetDefine.TOKEN)!=null) accout.setFormdate(GameStorage.getItem(NetDefine.TOKEN));
-        if(Game.Instance.isConnectServer) HttpRequest.getInstance().requestPost(RequestType.login,this.loginSuccess.bind(this),false,accout.FormData);
-        else this.loginSuccess();
-
+        if(Game.Instance.isConnectServer) HttpRequest.getInstance().requestPost(RequestType.login,this.loginSuccess.bind(this),accout.FormData);
+        else this.loginSuccess(); 
     }
 
+    /**
+     * 请求注册
+     * @param _vo 
+     */
     requestRegisterAccount(_vo:AccountVo)
     {
         let accout:NetAccountInfo=new NetAccountInfo();
         accout.username=_vo.user;
         accout.password=_vo.password;
+        this.accountInfo=accout;
         let fd:FormData=new FormData();
         fd.append('username',_vo.user);
         fd.append('password',_vo.password);
-        HttpRequest.getInstance().requestPost(RequestType.register,this.registerSuccess.bind(this),false,accout.FormData);
+        HttpRequest.getInstance().requestPost(RequestType.register,this.registerSuccess.bind(this),accout.FormData);
     }
 
+    /**
+     * 登录成功，进入加载界面
+     */
     loginSuccess()
     {
+        GameStorage.setItemJson(AccountVo.ACCOUNT_INFO,this.accountInfo);
+        Facade.getInstance().sendNotification(LoginEvent.SUCCESS);
         Facade.getInstance().sendNotification(LoginEvent.LOADING_GAME);
     }
 
-    registerSuccess(_vo:AccountVo)
+    /**
+     * 注册成功，进入加载界面
+     * @param ok 
+     * @param msg 
+     */
+    registerSuccess(ok:boolean,msg:string)
     {
-        let accout:NetAccountInfo=new NetAccountInfo();
-        accout.username=_vo.user;
-        accout.password=_vo.password;
-        GameStorage.setItemJson('UserConfig',accout);
-        Facade.getInstance().sendNotification(LoginEvent.LOADING_GAME);
-        NotificationView.Instance.showNotify('注册','成功');
+        GameStorage.setItemJson(AccountVo.ACCOUNT_INFO,this.accountInfo);
+        if(ok==true)
+        {
+            Facade.getInstance().sendNotification(LoginEvent.LOADING_GAME);
+            NotificationView.Instance.showNotify('注册',msg);
+        }
+        else
+        {
+            NotificationView.Instance.showNotify('注册',msg);
+        }
+        
+    }
+
+
+    getUserConfig():NetAccountInfo
+    {
+        let accountInfo:NetAccountInfo=new NetAccountInfo();
+        if(GameStorage.getItemJson(AccountVo.ACCOUNT_INFO)!=null && GameStorage.getItemJson(AccountVo.ACCOUNT_INFO)!=0)
+        {
+            accountInfo=Object.assign(new NetAccountInfo(),GameStorage.getItemJson(AccountVo.ACCOUNT_INFO));
+            return accountInfo;
+        }
+        return null;
+
     }
 
 }
