@@ -1,12 +1,12 @@
+import { EOPNOTSUPP } from "constants";
 
 
 export class NetDefine 
 {
-    public static HTTP_IP:string='http://192.168.1.128:8080';
-    public static HTTP_LOGIN_IP:string='http://192.168.1.128:8080/login';
-    public static HTTP_REGISTER_IP:string='http://192.168.1.128:8080/login/register';
-    public static TEST_INFO_IP:string='http://192.168.1.128:8080/player/info';
+    public static HTTP_IP:string='http://192.168.1.110:8080';
+    public static HTTP_LEVEL_IP:string='http://192.168.1.140:8080';
     public static TOKEN:string='token';
+    public static CONTENT_TYPE='Content-Type';
     public static AUTHORIZATION:string='Authorization';
     public static PREFIX:string='';
     public static IP:string='ws://192.168.1.227:';
@@ -29,94 +29,77 @@ export enum RequestType
     currency_info='/currency/info',
     /** 人物列表 */
     character_info='/character/info',
+    /** 人物升级 type 1.升一级 2.升满级 */
+    character_uplevel='/character/uplevel',
+    /** 人物升阶 */
+    character_upadvance_level='/character/upadvancelevel',
+    /** 添加人物 */
+    character_addcharacter='/character/addcharacter',
     /** 道具信息 */
-    props_info='/props/info'
+    props_info='/props/info',
+    /** 开始做菜 */
+    cook_start='/cook/start',
+    /** 获取玩家做菜数据 */
+    cook_info='/cook/info',
+    /** 获取奖励和访客数据 */
+    cook_reward='/cook/reward',
+    /** 做菜钻石加速 */
+    cook_quicken='/cook/quicken',
+    /** 抽奖 */
+    draw_treasure='/draw',
+    /** 获取宝箱信息接口 */
+    treasure_info='/draw/info',
+    /** 获取关卡列表 */
+    player_level_list='/playerLevel',
+    /** 将关卡设置为完成状态 */
+    player_finish_level='/playerLevel/finishLevel',
+    /** 将关卡设置为探索状态 */
+    player_working_level='/playerLevel/workingLevel',
+    /** 完成关卡，收获奖励 */
+    player_reward_level='/playerLevel/rewardLevel',
+    /**花费钻石加速 */
+    player_acceleration='/playerLevel/acceleration',
+    /**挂机获取关卡列表*/
+    onhook_infos='/playerOnHook/infos',
+    /**挂机获取玩家汽车列表 */
+    onhook_carinfos='/playerCar/infos',
+    /**开始探险 */
+    onhook_working='/playerOnHook/workingOnHook',
+    /**将关卡设置为完成 */
+    onhook_finish='/playerOnHook/finishOnHook/',
+    /**挂机完成领取奖励 */
+    onhook_reward='/playerOnHook/rewardOnHook',
+    /**挂机钻石加速完成 */
+    onhook_acceleration='/playerOnHook/acceleration',
+    /**升级挂机关卡 */
+    onhook_upgrade='/playerOnHook/upgradeOnHook',
+
+    /** 获取玩家任务信息接口 */
+    task_info='/task/info',
+    /** 领取任务完成奖励 */
+    task_reward='/task/reward',
+
 }
+
+export enum SocketProtocal
+{
+    
+}
+
 
 export enum ContentType
 {
     Multipart_From_Data='multipart/form-data',
     Text_Xml='text/xml',
     Application_Json='application/json',
-    Application_X_WWW_From_Urlencoded='application/x-www-form-urlencoded'
+    Application_X_WWW_From_Urlencoded='application/x-www-form-urlencoded',
+    Null='null'
 } 
 
-/**
- * 客户端->服务器
- */
-export enum C2SType
+export enum VerificationResult
 {
-    /** 上传做菜信息 */
-    QueryRoleList='role/query/role_list',
-    
-    /** 请求做菜状态 */
-    AskMakeCookingState=202,
-    /** 升级 */
-    RoleUpgradeLevel=203,
-    /** 升阶 */
-    RoleUpgradeAdvance=204,
-    /** 金币改变 */
-    CoinChange=205,
-    /** 钻石改变 */
-    DiamondChange=206,
-    /** 请求访客数据 */
-    AskVisitor=207,
-    /** 请求探索 */
-    AskExplore=208,
-    /** 请求探索状态 */
-    AskExploreState=209,
-    /** 请求挂机 */
-    AskOnhook=210,
-    /** 请求挂机状态 */
-    AskOnhookState=211,
-    /** 请求抽奖 */
-    AskLottery=212,
-    /** 请求任务信息 */
-    AskMissionInfo=213,
-    /** 提交任务 */
-    SubmitMission=214,
-    /** 上传任务进度 */
-    SubmitMissionProgree=215,
-    /** 装载装备 */
-    ReloadEquip=2,
-    
-    NULL
+    Success='success',
+    Failure='failure'
 }
 
-/**
- * 服务器->客户端
- */
-export enum S2CType
-{
-    /** 通知做菜状态 */
-    NotifyMakeCookingState=101,
-    /** 做菜列表信息 */
-    MakeCookingList=102,
-    /** 探索状态 */
-    NotifyExploreState=103,
-    NotifyRoleState=104,
-    /** 探索列表信息 */
-    ExploreList=105,
-    /** 挂机状态 */
-    NotifyOnhookState=106,
-    /** 挂机信息列表 */
-    OnhookList=107,
-    /** 通知访客 */
-    NotifyVisitor=108,
-    /** 人物列表 */
-    RoleList=109,
-    /** 菜谱列表 */
-    MenuList=111,
-    /** 访客列表 */
-    VisitorList=112,
-    /** 背包道具列表 */
-    WareHouseList=113,
-    /** 食材列表 */
-    FoodMaterialList=114,
-    /** 通知邮箱信息 */
-    NotifyMailList=115,
-    /** 通知聊天信息 */
-    NotifyChatInfo=116,
-    /** 宝箱列表 */
-    TreasureList=117,
-}
+

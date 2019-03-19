@@ -11,13 +11,12 @@ export class NetCommonality {
 /**道具（道具ID and 道具数量） 
 */
 export class NetProps{
-    /**道具ID */
-    PropsID:number=0;
-    /**道具数量 */
-    PropsNum:number=0;
+    
 
     id:number=0;
+    /**道具ID */
     propsId:number=0;
+    /**道具数量 */
     propsValue:number=0;
     propsType:number=0;
     playerId:number=0;

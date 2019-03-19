@@ -1,8 +1,10 @@
 import { NetAccountInfo } from "./NetMessage/NetAccountInfo";
 import { GameStorage } from "../Tools/GameStorage";
-import { NetDefine, RequestType } from "./NetDefine";
+import { NetDefine, RequestType, ContentType } from "./NetDefine";
 import { MessageHandle } from "./MessageHandle";
 import { NetHead } from "./NetMessage/NetHead";
+import { Facade } from "../MVC/Patterns/Facade/Facade";
+import { LoginEvent } from "../Events/LoginEvent";
 
 
 export class StatusCode
@@ -69,7 +71,7 @@ export class HttpRequest
         return HttpRequest.instance;
     }
 
-    public httpRequest: XMLHttpRequest;
+    private httpRequest: XMLHttpRequest;
     public static POST: string = 'POST';
     public static GET: string = 'GET';
     private authorization: string = '';
@@ -91,7 +93,7 @@ export class HttpRequest
      * @param requestData 
      * @param _callback 
      */
-    requestHttpData(_url: string, _method: string, requestData: any, _callback: any = null)
+    private requestHttpData(_url: string, _method: string, requestData: any, _callback: any = null)
     {
         if (_method == HttpRequest.POST)
         {
@@ -99,22 +101,20 @@ export class HttpRequest
         }
         else if (_method == HttpRequest.GET)
         {
-            this.requestGet(_url, requestData, _callback);
+            //this.requestGet(_url, requestData, _callback);
         }
     }
 
     /**
-     * 请求数据
+     * 
      * @param requestType 请求类型
-     * @param _callback 回调方法（返回请求数据）
-     * @param isSetHeader 头部请求
-     * @param _formData 
+     * @param _callback 
+     * @param _data 
      */
-    requestPost(requestType: RequestType, _callback: any, isSetHeader: boolean = true, _formData: FormData = null)
+    requestPost(requestType: RequestType, _callback: any, _data?: any,isOnNull:boolean=true)
     {
         this.httpRequest = new XMLHttpRequest();
-        //console.dir(Array.from(_formData.values()));
-        let self=this;
+        let self = this;
         this.httpRequest.onreadystatechange = function ()
         {
             if (this.readyState == 4)
@@ -122,57 +122,103 @@ export class HttpRequest
                 //{"status":200,"msg":"OK","data":null,"ok":true}
                 if (this.status == 200)
                 {
-                    console.dir(this.responseText);
-                    let obj: NetHead = <NetHead>JSON.parse(this.responseText);
+                    console.log('------------',requestType,'---------');
+                    let obj: NetHead = Object.assign(new NetHead(),JSON.parse(this.responseText)); 
+                    console.dir(obj);
                     self.message.onMessage(requestType, obj, _callback);
                 }
                 else
                 {
-                    console.log(StatusCode.GetCodeMsg(this.status));
+                    console.error(StatusCode.GetCodeMsg(this.status));
                 }
             }
             else
             {
-                console.log(StatusCode.GetCodeMsg(this.readyState));
+                //Facade.getInstance().sendNotification(LoginEvent.FAIL);
+                if(requestType==RequestType.login || requestType==RequestType.register) console.warn(StatusCode.GetCodeMsg(this.readyState));
             }
         };
         this.httpRequest.open('POST', NetDefine.HTTP_IP + requestType, true);
         this.httpRequest.withCredentials = true;
-        if (isSetHeader) {
-            this.authorization=GameStorage.getItem(NetDefine.TOKEN);
-            this.httpRequest.setRequestHeader(NetDefine.AUTHORIZATION, this.authorization);
-        }
-        if(_formData!=null){
-            this.httpRequest.send(_formData);
-        }
-        else
+        switch (requestType)
         {
-            this.httpRequest.send();
+            case RequestType.login:
+            case RequestType.register:
+                this.httpRequest.send(_data);
+                break;
+            default:
+                this.authorization = GameStorage.getItem(NetDefine.TOKEN);
+                this.httpRequest.setRequestHeader(NetDefine.AUTHORIZATION, this.authorization);
+                if (isOnNull)this.httpRequest.setRequestHeader(NetDefine.CONTENT_TYPE, ContentType.Application_Json);
+                this.httpRequest.send(_data);
+                break;
         }
 
     }
 
     //#region Get请求
 
-    requestGet(_url: string, _data: any, _callback?: (obj: any) => void)
+    requestGet(requestType: RequestType, _callback: any, _data?: any)
     {
-        let _http: XMLHttpRequest = new XMLHttpRequest();
-        _http.onreadystatechange = function ()
+        this.httpRequest = new XMLHttpRequest();
+        let self = this;
+        this.httpRequest.onreadystatechange = function ()
         {
-            if (_http.readyState === 4)
+            if (this.readyState == 4)
             {
-                if (_http.status === 200)
+                if (this.status == 200)
                 {
-                    let obj = JSON.parse(_http.responseText);
-                    //if(obj.token)
-                    if (typeof _callback != null && _callback instanceof Function)
-                        _callback(_http.responseText);
+                    console.log('------------',requestType,'---------');
+                    let obj: NetHead = Object.assign(new NetHead(),JSON.parse(this.responseText));
+                    console.dir(obj);
+                    self.message.onMessage(requestType, obj, _callback);
+                }
+                else
+                {
+                    //console.log(StatusCode.GetCodeMsg(this.status));
                 }
             }
+            else
+            {
+                //console.log(StatusCode.GetCodeMsg(this.readyState));
+            }
+        };
+        this.httpRequest.open('GET', this.getIP(requestType), true);
+        this.httpRequest.withCredentials = true;
+        this.authorization = GameStorage.getItem(NetDefine.TOKEN);
+        this.httpRequest.setRequestHeader(NetDefine.AUTHORIZATION, this.authorization);
+        this.httpRequest.setRequestHeader(NetDefine.CONTENT_TYPE, ContentType.Application_Json);
+        this.httpRequest.send(_data);
+    }
 
+    /**
+     * 区分服务器IP
+     * @param requestType 
+     */
+    getIP(requestType: RequestType): string
+    {
+        switch (requestType)
+        {
+            case RequestType.login:
+            case RequestType.register:
+            case RequestType.props_info:
+            case RequestType.player_info:
+            case RequestType.character_info:
+            case RequestType.cook_info:
+            case RequestType.cook_quicken:
+            case RequestType.cook_reward:
+            case RequestType.cook_start:
+            case RequestType.currency_info:
+            case RequestType.player_finish_level:
+            case RequestType.player_level_list:
+            case RequestType.player_reward_level:
+            case RequestType.player_working_level:
+                return NetDefine.HTTP_IP + requestType;
+                break;
+            default:
+                return NetDefine.HTTP_IP + requestType;
+                break;
         }
-        _http.open(HttpRequest.GET, _url, true);
-        _http.send();
     }
 
     //#endregion

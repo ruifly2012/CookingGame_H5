@@ -1,12 +1,7 @@
-import { C2SType } from "../NetDefine";
+import { NetProps } from "./NetCommonality";
 
 
-export class Info
-{
-    method:string=C2SType.QueryRoleList;
-    state:string='';
-    data:NetRoleInfo=new NetRoleInfo();
-}
+
 
 /**
  * 人物请求反参
@@ -17,6 +12,7 @@ export class NetRoleInfo
     /*** ID*/
     public id: number = 0;
     public playerId:number=0;
+    public characterId:number=0;
     /*** 等级(20-30-30)*/
     public level: number = 0;
     /*** 进阶等级*/
@@ -51,8 +47,19 @@ export class NotifyRole
 {
     roleId:number=0;
 }
-
-export class NotifyRoleUpdate
+/** 人物升级返回信息 */
+export class NotifyRoleUpgrade
 {
-    
+    gold:number=0;
+    character:NetRoleInfo;
+
+}
+
+/** 人物升阶返回信息 */
+export class NotifyRoleAdvanceLevel
+{
+    gold:number=3100;
+    character:NetRoleInfo;
+    props:NetProps[];
+
 }
