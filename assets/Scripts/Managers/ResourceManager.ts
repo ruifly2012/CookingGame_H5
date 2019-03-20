@@ -28,13 +28,15 @@ export class ResourceManager{
      * @param _type 文件类型
      * @param _callback 回调函数，参数类型为any
      */
-    public loadResources(_url: string, _type:typeof cc.Asset, _callback?: (obj) => any) {
-        cc.loader.loadRes(_url,_type,this.loadingProgress,(err,obj)=>{
+    public loadResources(_url: string, _type:typeof cc.Asset, _callback?: (obj) => any,loadingProgress?:any) {
+        
+        cc.loader.loadRes(_url,_type,loadingProgress,(err,obj)=>{
             if(err){
-                console.error("!!! load _url:"+_url+" error.......");
+                console.error("!!! load _url:"+_url+" ......."+err);
             }
             else{
-                //Log.Info('load '+_url+' res complete...'+obj);
+                Log.Info('load '+_url+' res complete...'+obj);
+                if(obj==null) console.error('the obj:',_url,' is null!!!');
                 if(typeof _callback !='undefined' && _callback instanceof Function)
                 {
                     _callback(obj);
@@ -56,7 +58,7 @@ export class ResourceManager{
                 console.error('!!! load error.....'+_url+','+err);
             }
             else{
-                //Log.Info('load '+_url+' res complete....'+arr.length);
+                Log.Info('load '+_url+' res complete....'+arr.length);
                 if(typeof _callback !='undefined' && _callback instanceof Function){
                     _callback(arr);
                 }

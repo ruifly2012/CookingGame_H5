@@ -1,6 +1,8 @@
 import { CookingProxy, CookingStatus } from "./CookingProxy";
 import { Facade } from "../../../MVC/Patterns/Facade/Facade";
 import { GameCommand } from "../../../Events/GameCommand";
+import { HttpRequest } from "../../../NetWork/HttpRequest";
+import { RequestType } from "../../../NetWork/NetDefine";
 
 
 /**
@@ -26,7 +28,6 @@ export class CookingNetwork {
     checkCooking()
     {
         let proxy:CookingProxy=<CookingProxy>Facade.getInstance().retrieveProxy(CookingProxy.name);
-        proxy.checkTime();
     }
 
     

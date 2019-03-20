@@ -33,7 +33,7 @@
       }
     ],
     "_active": true,
-    "_level": 3,
+    "_level": 2,
     "_components": [
       {
         "__id__": 552
@@ -174,7 +174,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "1",
+    "_name": "0",
     "_objFlags": 0,
     "_parent": {
       "__id__": 2
@@ -354,7 +354,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "1",
+    "_name": "0",
     "_objFlags": 0,
     "_parent": {
       "__id__": 3
@@ -1471,7 +1471,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "2",
+    "_name": "1",
     "_objFlags": 0,
     "_parent": {
       "__id__": 2
@@ -1651,7 +1651,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "2",
+    "_name": "1",
     "_objFlags": 0,
     "_parent": {
       "__id__": 40
@@ -2768,7 +2768,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "3",
+    "_name": "2",
     "_objFlags": 0,
     "_parent": {
       "__id__": 2
@@ -2948,7 +2948,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "3",
+    "_name": "2",
     "_objFlags": 0,
     "_parent": {
       "__id__": 77
@@ -4065,7 +4065,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "4",
+    "_name": "3",
     "_objFlags": 0,
     "_parent": {
       "__id__": 2
@@ -4245,7 +4245,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "4",
+    "_name": "3",
     "_objFlags": 0,
     "_parent": {
       "__id__": 114

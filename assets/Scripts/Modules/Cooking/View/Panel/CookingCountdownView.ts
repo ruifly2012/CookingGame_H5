@@ -64,7 +64,7 @@ export default class CookingCountdownView extends cc.Component
         {
             return ;
         }
-        this.node.parent.dispatchEvent(new CookingEvent(CookingEvent.COOKING_END,true));
+        this.node.parent.dispatchEvent(new CookingEvent(CookingEvent.SPPEE_UP_COOKING_END,true));
     }
 
     start () 

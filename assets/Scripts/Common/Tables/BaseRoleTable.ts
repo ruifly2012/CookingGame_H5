@@ -38,7 +38,6 @@ export class RoleTable implements ITable
             person._UpgradeAttribute = obj['人物升级属性方案'];
             person._AdvancedCost = obj['人物进阶消耗方案'];
             person._ResourceName = obj['人物资源'];
-
             tableMap.set(person._ID, person);
         }
         return tableMap;

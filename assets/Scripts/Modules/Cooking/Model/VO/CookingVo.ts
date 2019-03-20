@@ -20,6 +20,10 @@ export class CookingVo {
     allMenuAmount:number=0;
     
     private acutalMenuList:Array<CookMenuVo>=new Array();
+    public set MenuList(list:Array<CookMenuVo>)
+    {
+        this.acutalMenuList=list;
+    }
     /** 实际做菜列表，数组不为空，menu数组可能存在空元素 */
     public get MenuList():Array<CookMenuVo>
     {
@@ -30,6 +34,17 @@ export class CookingVo {
 
     public constructor(_id:number) {
         this.ID=_id;
+    }
+
+    setRoleMenu(role:PresonDataBase,_menu:CookMenuVo,price:number,time:number,amount:number)
+    {
+        this.role=role;
+        this.menu.push(_menu);
+        this.MenuList.push(_menu);
+        this.price=price;
+        this.time=time;
+        this.allMenuAmount+=amount;
+
     }
 
     /**

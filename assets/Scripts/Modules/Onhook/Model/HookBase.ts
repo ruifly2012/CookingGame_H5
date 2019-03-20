@@ -12,6 +12,7 @@ import VisitorView from "../../Cooking/View/Panel/VisitorView";
 import { VisitorDataBase } from "../../../Common/VO/VisitorDataBase";
 import { ServerSimulator } from "../../Missions/ServerSimulator";
 import { HookLevelInfo, OnHookProtocal } from "../../Missions/MissionManager";
+import OnHookProxy from "./OnHookProxy";
 
 /**挂机数据操作类 */
 export default class HookBase {
@@ -29,7 +30,7 @@ export default class HookBase {
     }
     /**
      * 返回指定类型属性总和，若有回调，则执行一遍回调
-     * @param type 属性类型 1为力量,2为敏捷,3为体力,4为意志 
+     * @param type 属性类型 1为力量,2为敏捷,3为体力,4为意志
      */
     TotalAttribute(type: number): number {
         this.total = 0;
@@ -123,10 +124,5 @@ export default class HookBase {
         return isOn;
     }
     
-    /**等级提升 */
-    LevelUp(){
-        this.HB._Level++;
-        this.HB.SetOnHookData();
-    }
 }
 

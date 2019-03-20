@@ -3,12 +3,10 @@ import { INotification } from "../../../MVC/Interfaces/INotification";
 import { GameCommand } from "../../../Events/GameCommand";
 import { RoleProxy } from "../../Role/Model/RoleProxy";
 import { Facade } from "../../../MVC/Patterns/Facade/Facade";
-import { Log } from "../../../Tools/Log";
 import CookingView from "./Panel/CookingView";
 import { ObjectTool } from "../../../Tools/ObjectTool";
 import PresonDataBase from "../../../Common/VO/PresonDataBase";
 import RoleItemView from "../../Role/View/RoleItemView";
-import { System_Event } from "../../../Events/EventType";
 import { UIPanelEnum } from "../../../Enums/UIPanelEnum";
 import { ResourceManager } from "../../../Managers/ResourceManager";
 import RoleItemDetailPanel from "../../Role/View/Panels/RoleItemDetailPanel";
@@ -24,8 +22,6 @@ import CookingCountdownView from "./Panel/CookingCountdownView";
 import { CurrencyManager } from "../../../Managers/ CurrencyManager";
 import { FigureStatus, AttributeEnum } from "../../../Enums/RoleEnum";
 import { ArrayTool } from "../../../Tools/ArrayTool";
-import { MissionManager } from "../../Missions/MissionManager";
-import { ServerSimulator } from "../../Missions/ServerSimulator";
 
 
 /**
@@ -35,7 +31,8 @@ import { ServerSimulator } from "../../Missions/ServerSimulator";
  * 2.当人物要选择菜谱时，给MenuSelectCommand发送初始化菜谱事件
  * 3.每次进入做菜界面，初始完人物之后，都要检查之前已保存到选择数据，然后配置之前已经选择的数据
  */
-export class CookingMediator extends Mediator {
+export class CookingMediator extends Mediator
+{
 
     roleProxy: RoleProxy = null;
     cookingProxy: CookingProxy = null;
@@ -45,12 +42,14 @@ export class CookingMediator extends Mediator {
      * 
      * @param view 
      */
-    public constructor(view: any) {
+    public constructor(view: any)
+    {
         super(CookingMediator.name, view);
         this.roleProxy = <RoleProxy>Facade.getInstance().retrieveProxy(RoleProxy.name);
         this.cookingProxy = <CookingProxy>Facade.getInstance().retrieveProxy(CookingProxy.name);
 
-        this.getViewComponent().setCurrRoleCookingSeat = function (num) {
+        this.getViewComponent().setCurrRoleCookingSeat = function (num)
+        {
             this.cookingProxy.setCookingSeat(num);
         }.bind(this);
 
@@ -60,26 +59,29 @@ export class CookingMediator extends Mediator {
 
         //第二次确认做菜
         this.getViewComponent().node.on(CookingEvent.CONFIRM_COOKING, this.startCookingHandle, this);
-        this.getViewComponent().node.on(CookingEvent.COOKING_END, this.closeBusiness, this);
+        this.getViewComponent().node.on(CookingEvent.SPPEE_UP_COOKING_END, this.speedUpCookingEnd, this);
 
         this.getViewComponent().onUpdate = this.onUpdate.bind(this);
         this.getViewComponent().roleFilterHandle = this.roleFilterHandle.bind(this);
     }
 
-    showBusiness() {
-        if (this.cookingProxy.getAllMenuNum() > 0) {
+    showBusiness()
+    {
+        if (this.cookingProxy.getAllMenuNum() > 0)
+        {
             this.sendNotification(GameCommand.BUSINESS_COMMAND);
         }
     }
 
-    closeBusiness() {
-        CurrencyManager.getInstance().Money -= this.cookingProxy.MoneySum;
-        this.cookingProxy.cookingEnd();
+    speedUpCookingEnd()
+    {
+       this.cookingProxy.speedUpCooking();
     }
 
-    onUpdate(dt) {
-        //Log.Info('dt.....',dt);
-        if (this.cookingProxy.cookingStatus == CookingStatus.Cooking) {
+    onUpdate(dt)
+    {
+        if (this.cookingProxy.cookingStatus == CookingStatus.Cooking)
+        {
             this.getViewComponent().countdownPanel.getComponent(CookingCountdownView).updateCount(this.cookingProxy.TimeStr, this.cookingProxy.MoneySum);
         }
     }
@@ -91,24 +93,30 @@ export class CookingMediator extends Mediator {
      * 4.点击不同人物的btn->重新初始化
      * 5.点击不处在当前位置当前人物的btn->重新初始化
      */
-    addMenuBtnHandle(selectVo: SelectVo) {
+    addMenuBtnHandle(selectVo: SelectVo)
+    {
         //Log.Info(vo, selectVo.seatNum, selectVo.menuNum, this.cookingProxy.getCookingSeat(), this.cookingProxy.currRoleMenuNum);
         this.updateTimer();
         let _roleLocaltion: number = this.cookingProxy.currMenuLocation;
-        if (this.getViewComponent().cookSelectPanel.active == false) {
+        if (this.getViewComponent().cookSelectPanel.active == false)
+        {
             this.cookingProxy.cookingMenuLocation(selectVo.seatNum, selectVo.menuNum);
             //发送通知给MenuSelectCommand进行菜谱界面初始化
             this.sendNotification(GameCommand.MENU_SELECTED_COMMAND, CookingEvent.ADD_MENU_BTN);
             if (_roleLocaltion != selectVo.seatNum) this.sendNotification(CookingEvent.CHANGE_ROLE);
         }
-        else {
-            if (selectVo.seatNum == this.cookingProxy.getCookingSeat()) {
-                if (selectVo.menuNum == this.cookingProxy.currMenuLocation) {
+        else
+        {
+            if (selectVo.seatNum == this.cookingProxy.getCookingSeat())
+            {
+                if (selectVo.menuNum == this.cookingProxy.currMenuLocation)
+                {
                     this.cookingProxy.checkSoldout();
                 }
                 this.cookingProxy.currMenuLocation = selectVo.menuNum;
             }
-            else {
+            else
+            {
                 //Log.Info('人物座位不一样---------');
                 this.cookingProxy.cookingMenuLocation(selectVo.seatNum, selectVo.menuNum);
                 //发送通知给MenuSelectCommand进行菜谱界面初始化
@@ -122,7 +130,8 @@ export class CookingMediator extends Mediator {
     /**
         * 列出自己感兴趣的通知
         */
-    public listNotificationInterests(): string[] {
+    public listNotificationInterests(): string[]
+    {
         return [
             UIPanelEnum.CookingPanel,
             CookingEvent.INIT_OWNER_ROLE,
@@ -141,17 +150,24 @@ export class CookingMediator extends Mediator {
      * 处理自己感兴趣的通知
      * @param notification 
      */
-    handleNotification(notification: INotification): void {
-        switch (notification.getName()) {
+    handleNotification(notification: INotification): void
+    {
+        switch (notification.getName())
+        {
             case UIPanelEnum.CookingPanel:
                 this.sendNotification(GameCommand.COOKING_COMMAND, GameCommand.COOKING_INIT);
-                break;
-            case CookingEvent.INIT_OWNER_ROLE:
                 this.getViewComponent().roleSelectPanel.active = true;
                 this.getViewComponent().cookSelectPanel.active = false;
                 this.initOwnerRole();
                 this.roleFilterHandle('_ID');
                 this.checkTheCookingStatus();
+                break;
+            case CookingEvent.INIT_OWNER_ROLE:
+                /* this.getViewComponent().roleSelectPanel.active = true;
+                this.getViewComponent().cookSelectPanel.active = false;
+                this.initOwnerRole();
+                this.roleFilterHandle('_ID');
+                this.checkTheCookingStatus(); */
 
                 break;
             case CookingEvent.UPDATE_COOKING_SEAT:
@@ -192,21 +208,26 @@ export class CookingMediator extends Mediator {
     /**
      * 打开做菜界面后，查看做菜状态
      */
-    checkTheCookingStatus() {
-        if (this.cookingProxy.cookingStatus == CookingStatus.Cooking) {
+    checkTheCookingStatus()
+    {
+        if (this.cookingProxy.cookingStatus == CookingStatus.Cooking)
+        {
             this.showCountdownView();
         }
-        else if (this.cookingProxy.cookingStatus == CookingStatus.CookingEnd) {
-            if (this.cookingProxy.CookingMap.size == 0) {
+        else if (this.cookingProxy.cookingStatus == CookingStatus.CookingEnd)
+        {
+            if (this.cookingProxy.CookingMap.size == 0)
+            {
                 this.getViewComponent().businessView.active = false;
                 this.getViewComponent().countdownPanel.active = false;
             }
-            else {
+            else
+            {
                 this.getViewComponent().businessView.active = true;
                 this.getViewComponent().countdownPanel.active = false;
                 //显示做菜完成收获界面
                 this.sendNotification(CookingEvent.SHOW_BUSINESS_MENU, this.cookingProxy.CookingMap);
-                this.cookingProxy.showVisitor();
+                //this.cookingProxy.showVisitor();
                 //this.getViewComponent().businessView.getComponent(BusinessView).showReward();
             }
 
@@ -217,7 +238,8 @@ export class CookingMediator extends Mediator {
     /**
      *初始化所拥有的角色 
      */
-    public initOwnerRole(): any {
+    public initOwnerRole(): any
+    {
         this.getViewComponent().roleItemContent.destroyAllChildren();
         let prefab: cc.Prefab = this.roleProxy.getPrefabWithName('roleHeadItem');
         let selectedRoles: PresonDataBase[] = this.cookingProxy.getSelectedRoleVo();
@@ -226,7 +248,8 @@ export class CookingMediator extends Mediator {
         let _professionSprite: cc.SpriteFrame = null;
         let _roleSprite: cc.SpriteFrame = null;
         //Log.Info('---------', this.roleProxy.roleList.length, '-------');
-        for (let i = 0; i < this.roleProxy.roleList.length; i++) {
+        for (let i = 0; i < this.roleProxy.roleList.length; i++)
+        {
             data = this.roleProxy.roleList[i];
             _roleItemView = ObjectTool.instanceWithPrefab('role' + i, prefab, this.getViewComponent().roleItemContent).getComponent(RoleItemView);
             //获得相应ICON
@@ -235,8 +258,6 @@ export class CookingMediator extends Mediator {
             if (data._NowState != FigureStatus.Leisure) _roleItemView.exploreing.active = true;
             else _roleItemView.exploreing.active = false;
             _roleItemView.setInfo(data._ID, _roleSprite, data._Level, _professionSprite);
-
-            //_roleItemView.node.on(System_Event.TOUCH_START, this.clickHandle, this);
             _roleItemView.clickEvent = function (e) { this.clickHandle(e); }.bind(this);
             _roleItemView.pressHandle = function (e) { this.pressHandle(e); }.bind(this);
             this.roleList.push(_roleItemView);
@@ -249,50 +270,22 @@ export class CookingMediator extends Mediator {
 
     }
 
+
     /**
      * 当重新进入做菜界面的时候，设置之前已经设置过的人物数据和做菜数据
      */
-    /* configSelectedData() {
-        this.cookingProxy.CookingMap.forEach((cookingVo, key) => {
-            if (cookingVo == null || cookingVo.role == undefined) return;
-            if (cookingVo.role != null && cookingVo.role != undefined) {
-                //Log.Info('已选择的人物：', cookingVo.role._Name);
-                let _item: RoleItemView = this.roleList.find(o => o.ID == cookingVo.role._ID);
-                _item.selected.active = true;
-                _item.node.getComponent(cc.Button).interactable = false;
-                this.cookingProxy.currCookingSeat = key;
-                this.sendNotification(CookingEvent.UPDATE_COOKING_SEAT, cookingVo);
-                if (cookingVo.menu == null || cookingVo.menu == undefined) return;
-                cookingVo.menu.forEach((cookMenuVo, key2) => {
-                    if (cookMenuVo == null || cookMenuVo == undefined) return;
-                    //Log.Info('已选择的菜：', cookMenuVo._Name, key2, cookMenuVo._Num);
-                    this.cookingProxy.currMenuLocation = key2;
-                    let icon: cc.SpriteFrame = AssetManager.getInstance().getSpriteFromAtlas(cookMenuVo._ResourceName);
-                    let nodeName = 'cookingRole/cookingRoleFrame_' + (key + 1);
-                    let _node = ObjectTool.FindObjWithParent(nodeName, this.getViewComponent().node).getComponent(SelectCookRoleItem);
-                    //Log.Info('node...........', _node.name, _node.addCookBtns[key2].getChildByName('icon_' + (key2 + 1)).name, icon.name);
-                    let _roleMenuNode: cc.Node = _node.addCookBtns[key2].getChildByName('icon_' + (key2 + 1));
-                    _roleMenuNode.active = true;
-                    _roleMenuNode.getComponent(cc.Sprite).spriteFrame = icon;
-                    _roleMenuNode.getComponentInChildren(cc.Label).string = String(cookMenuVo._Amount);
-                });
-                if (cookingVo.role._NowState == FigureStatus.Explore) _item.exploreing.active = true;
-                else _item.exploreing.active = false;
-            }
-        });
-        this.getViewComponent().timerTxt.string = this.cookingProxy.TimeStr;
-        //this.updateTimer();
-    } */
-
-    _configSelectedData() {
-        this.cookingProxy.CookingMap.forEach((cookingVo, key) => {
+    _configSelectedData()
+    {
+        this.cookingProxy.CookingMap.forEach((cookingVo, key) =>
+        {
             //Log.Info('已选择的人物：', cookingVo.role._Name);
             let _item: RoleItemView = this.roleList.find(o => o.ID == cookingVo.role._ID);
             _item.selected.active = true;
             _item.node.getComponent(cc.Button).interactable = false;
             this.cookingProxy.currCookingSeat = key;
             this.sendNotification(CookingEvent.UPDATE_COOKING_SEAT, cookingVo);
-            cookingVo.MenuList.forEach((_menu,_menuLocation)=>{
+            cookingVo.MenuList.forEach((_menu, _menuLocation) =>
+            {
                 //Log.Info('已选择的菜：', cookMenuVo._Name, key2, cookMenuVo._Num);
                 this.cookingProxy.currMenuLocation = _menuLocation;
                 let icon: cc.SpriteFrame = AssetManager.getInstance().getSpriteFromAtlas(_menu._ResourceName);
@@ -313,19 +306,22 @@ export class CookingMediator extends Mediator {
     /**
      * 请求当前任务，判断是否有做菜任务
      */
-    requestMission() {
+    requestMission()
+    {
 
     }
 
     /**
      * 初始化菜谱面板
      */
-    public initRoleMenu() {
+    public initRoleMenu()
+    {
 
     }
 
 
-    public SetInfo(item: RoleItemView): any {
+    public SetInfo(item: RoleItemView): any
+    {
         let index: number = item.ID;
         // this.updateSelectStatus(item.ID);
 
@@ -335,12 +331,14 @@ export class CookingMediator extends Mediator {
      * 当点击人物时，人物上阵，做菜
      * @param data 点击的对象
      */
-    public clickHandle(data: cc.Event.EventTouch): any {
+    public clickHandle(data: cc.Event.EventTouch): any
+    {
 
         let item: RoleItemView = <RoleItemView>data.target.getComponent(RoleItemView);
         if (item.exploreing.active) return;
         //人物已选择
-        if (item.selected.active) {
+        if (item.selected.active)
+        {
             this.cookingProxy.findtheSeatRole(item.ID);
             this.getViewComponent().focusSeat(this.cookingProxy.getCookingSeat());
             return;
@@ -360,10 +358,12 @@ export class CookingMediator extends Mediator {
     * 长按显示人物详细面板
     * @param id 人物ID
     */
-    public pressHandle(id: any): any {
+    public pressHandle(id: any): any
+    {
         let self = this;
         ResourceManager.getInstance().loadResources('prefabs/roleModule/DetailAttrPanel', cc.Prefab
-            , function (prefab: cc.Prefab) {
+            , function (prefab: cc.Prefab)
+            {
                 let detail: cc.Node = ObjectTool.instanceWithPrefab('detailPanel', prefab, self.getViewComponent().node);
                 detail.getComponent(RoleItemDetailPanel).setWithID(Number(id));
             });
@@ -373,7 +373,8 @@ export class CookingMediator extends Mediator {
      * 设置当前所选中的位置的做菜人物
      * @param vo cookingVO
      */
-    public setSeatRole(vo: CookingVo): any {
+    public setSeatRole(vo: CookingVo): any
+    {
         // Log.Info('------',this.cookingProxy.getCookingSeat());
         let item: SelectCookRoleItem = this.getViewComponent().cookingRoleFrames[vo.ID].getComponent(SelectCookRoleItem);
         let cook_arr: any = this.roleProxy.sortCookingAttr(vo.role.CookingSkillVals);
@@ -385,10 +386,12 @@ export class CookingMediator extends Mediator {
      * 更新人物选择状态
      * @param id 
      */
-    public updateSelectStatus(id: number) {
+    public updateSelectStatus(id: number)
+    {
         let length = this.getViewComponent().roleItemContent.childrenCount;
         let itemview: RoleItemView = null;
-        for (let i = 0; i < length; i++) {
+        for (let i = 0; i < length; i++)
+        {
             //Log.Info('item node :',this.getViewComponent().roleItemContent.getChildByName('role' + i));
             itemview = this.getViewComponent().roleItemContent.getChildByName('role' + i).getComponent(RoleItemView);
             if (itemview.ID === id) itemview.selected.active = true;
@@ -400,7 +403,8 @@ export class CookingMediator extends Mediator {
      * 接受从CookingProxy发来的下架消息处理方法
      * @param cookingVO 
      */
-    soldoutRoleHandle(roleid: number): any {
+    soldoutRoleHandle(roleid: number): any
+    {
         let item: RoleItemView = this.roleList.filter(p => p.ID === roleid)[0];
         this.getViewComponent().cookingRoleFrames[this.cookingProxy.getCookingSeat()].getComponent(SelectCookRoleItem).reset();
         item.selected.active = false;
@@ -408,19 +412,22 @@ export class CookingMediator extends Mediator {
         this.updateTimer();
     }
 
-    public setCookingMenuBtnIcon(data: any, num: number) {
+    public setCookingMenuBtnIcon(data: any, num: number)
+    {
         this.updateTimer();
         this.getViewComponent().setCookingMenuBtnIcon(data, num);
     }
 
-    public setMenuNum(num: number) {
+    public setMenuNum(num: number)
+    {
         this.getViewComponent().setMenuNum(num);
     }
 
     /**
     * 下架已上去的菜
     */
-    soldoutMenu(cookMenuVo: CookMenuVo) {
+    soldoutMenu(cookMenuVo: CookMenuVo)
+    {
         this.updateTimer();
         this.getViewComponent().HideMenuBtnIcon();
     }
@@ -429,12 +436,15 @@ export class CookingMediator extends Mediator {
      * 开始做菜界面，做菜完成界面
      * @param event 
      */
-    startCookingHandle(event): any {
-        if (this.cookingProxy.cookingStatus == CookingStatus.Idle) {
+    startCookingHandle(event): any
+    {
+        if (this.cookingProxy.cookingStatus == CookingStatus.Idle)
+        {
             this.cookingProxy.startCooking();
             this.showCountdownView();
         }
-        else if (this.cookingProxy.cookingStatus == CookingStatus.CookingEnd) {
+        else if (this.cookingProxy.cookingStatus == CookingStatus.CookingEnd)
+        {
             this.cookingProxy.collectEarn();
             this.getViewComponent().closePanel(null);
         }
@@ -444,23 +454,26 @@ export class CookingMediator extends Mediator {
     /**
      * 做菜结束
      */
-    cookingEndHandle() {
+    cookingEndHandle()
+    {
         this.getViewComponent().businessView.active = true;
         this.getViewComponent().countdownPanel.active = false;
         this.sendNotification(CookingEvent.SHOW_BUSINESS_MENU, this.cookingProxy.CookingMap);
         //显示做菜完成收获界面
         this.getViewComponent().businessView.getComponent(BusinessView).showReward();
-        this.cookingProxy.showVisitor();
+        //this.cookingProxy.showVisitor();
     }
 
     /**
      * 结算预计界面
      */
-    showCountdownView() {
+    showCountdownView()
+    {
         this.getViewComponent().countdownPanel.active = true;
         let roles: PresonDataBase[] = this.cookingProxy.getSelectedRoleVo();
         let icons: any = [];
-        roles.forEach((value) => {
+        roles.forEach((value) =>
+        {
             icons.push(AssetManager.getInstance().getSpriteFromAtlas(value._ResourceName + '_a'));
         });
         let timer = this.cookingProxy.TimeStr;
@@ -470,32 +483,36 @@ export class CookingMediator extends Mediator {
         this.getViewComponent().countdownPanel.getComponent(CookingCountdownView).showInfo(icons, earn, timer, money);
     }
 
-    updateTimer() {
+    updateTimer()
+    {
         this.cookingProxy.calaBusinessMenu();
         this.getViewComponent().timerTxt.string = this.cookingProxy.TimeStr;
     }
 
-    roleFilterHandle(_property: string) {
+    roleFilterHandle(_property: string)
+    {
         let roleList: Array<PresonDataBase> = this.roleProxy.roleList;
         let newList: Array<PresonDataBase> = new Array();
         let valArr = null;
         let _icon = null;
         if (_property != '_ID') _icon = this.roleProxy.getSpriteFromAtlas(_property.substr(1).toLocaleLowerCase());
-        if (_property == '_ID') _icon = this.roleProxy.getSpriteFromAtlas(AttributeEnum.Power);
-        if (_property != '_ID') newList = roleList.sort(ArrayTool.compare(_property));
-        else newList = roleList.sort(ArrayTool.compare(_property));
+        else _icon = this.roleProxy.getSpriteFromAtlas(AttributeEnum.Power);
         valArr = newList.map(ArrayTool.map(_property));
         this.sortNode(newList, valArr, _icon);
-        if (_property == '_ID') {
-            this.roleList.map(function (item, index, base) {
+        if (_property == '_ID')
+        {
+            this.roleList.map(function (item, index, base)
+            {
                 item.attrNode.active = false;
             });
         }
 
     }
 
-    sortNode(arr: any, val: any, icon: cc.SpriteFrame) {
-        for (let i = arr.length - 1; i >= 0; i--) {
+    sortNode(arr: any, val: any, icon: cc.SpriteFrame)
+    {
+        for (let i = arr.length - 1; i >= 0; i--)
+        {
             let item: RoleItemView = this.roleList.filter(o => o.ID == arr[i]._ID)[0];
             item.node.setSiblingIndex(0);
             item.showFilterInfo(icon, val[i]);
@@ -505,14 +522,16 @@ export class CookingMediator extends Mediator {
     /**
      * 
      */
-    onRegister(): void {
+    onRegister(): void
+    {
         super.onRegister();
     }
 
     /**
      * 
      */
-    onRemove(): void {
+    onRemove(): void
+    {
         this.roleProxy.roleList.sort(ArrayTool.compare('_ID', false));
         //if(this.cookingProxy.cookingStatus==CookingStatus.Idle) this.cookingProxy.resetFoodMaterial();
 
@@ -526,14 +545,16 @@ export class CookingMediator extends Mediator {
      * @param body 
      * @param type 
      */
-    sendNotification(name: string, body?: any, type?: string): void {
+    sendNotification(name: string, body?: any, type?: string): void
+    {
         super.sendNotification(name, body, type);
     }
 
     /**
      * 得到视图组件
      */
-    getViewComponent(): CookingView {
+    getViewComponent(): CookingView
+    {
         return this.viewComponent;
     }
 

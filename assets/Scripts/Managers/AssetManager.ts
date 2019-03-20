@@ -4,6 +4,7 @@ import { GlobalPath } from "../Common/GlobalPath";
 import { UIPanelEnum } from "../Enums/UIPanelEnum";
 import { UIManager } from "./UIManager";
 import { ObjectTool } from "../Tools/ObjectTool";
+import { ConfigManager } from "./ConfigManager";
 
 
 /**
@@ -19,10 +20,11 @@ export class AssetManager {
     roleIconMap:Map<string,cc.SpriteFrame>=new Map();
 
     spriteAtlas:cc.SpriteAtlas=null;
-    private prefabUrls:string[]=[];
+    private atlasUrls:string[]=[];
+    private prefabPaths:string[]=[];
     public get urlsLength():number
     {
-        return this.prefabUrls.length;
+        return this.atlasUrls.length+this.prefabPaths.length;
     }
     private completeIndex:number=0;
     public get CompleteIndex():number
@@ -43,26 +45,13 @@ export class AssetManager {
 
     PreInit()
     {
-        this.prefabUrls=[GlobalPath.UI_ATLAS_PATH,GlobalPath.ITEM_PREFAB_DIR,GlobalPath.TREASURE_ITEM_DIR,GlobalPath.ROLE_ATTRIBUTE_ICON_PATH
-                        ,GlobalPath.STAGE_PROPERTY_Path+'Figure/',GlobalPath.UI_PANEL_DIR + UIPanelEnum.LobbyPanel];
-
-        ResourceManager.getInstance().loadResourceDir(GlobalPath.TREASURE_ITEM_DIR,cc.Prefab,this.loadedPrefabs.bind(this));
-        ResourceManager.getInstance().loadResourceDir(GlobalPath.ROLE_ATTRIBUTE_ICON_PATH,cc.SpriteFrame,this.completeAttributeSprite.bind(this));
-        ResourceManager.getInstance().loadResourceDir(GlobalPath.STAGE_PROPERTY_Path+'Figure/',cc.SpriteFrame,this.FigureSprite.bind(this));
-        ResourceManager.getInstance().loadResourceDir(GlobalPath.ITEM_PREFAB_DIR,cc.Prefab,this.loadedPrefabs.bind(this));
+        this.atlasUrls=[GlobalPath.UI_ATLAS_PATH,GlobalPath.ROLE_BIG_MAP];
+        this.prefabPaths=Array.from(ConfigManager.getInstance().prefabPathMap.values());
+        for (let j = 0; j < this.prefabPaths.length; j++) {
+            ResourceManager.getInstance().loadResources(this.prefabPaths[j],cc.Prefab,this.loadedPrefabs.bind(this));
+        }
+        ResourceManager.getInstance().loadResourceDir(GlobalPath.ROLE_BIG_MAP,cc.SpriteFrame,this.FigureSprite.bind(this));
         ResourceManager.getInstance().loadResources(GlobalPath.UI_ATLAS_PATH,cc.SpriteAtlas,this.completeAtlas.bind(this));
-
-        let self=this;
-        ResourceManager.getInstance().loadResources(GlobalPath.UI_PANEL_DIR + UIPanelEnum.LobbyPanel, cc.Prefab, function (obj: cc.Prefab)
-        {
-            if (obj != null)
-            {
-                let _node: cc.Node = ObjectTool.instanceWithPrefab(obj.name, obj, UIManager.getInstance().uiRoot);
-                UIManager.getInstance().setUIPanel(UIPanelEnum.LobbyPanel, _node);
-                _node.active=false;
-                self.completeIndex++;
-            }
-        });
         
     }
 
@@ -73,25 +62,9 @@ export class AssetManager {
         this.completeIndex++;
     }
 
-    loadedPrefabs(prefabs:cc.Prefab[])
+    loadedPrefabs(prefab:cc.Prefab)
     {
-        for (let i = 0; i < prefabs.length; i++) {
-            this.prefabMap.set(prefabs[i].name,prefabs[i]);
-        }
-        this.completeIndex++;
-    }
-
-    //#region  临时test，后面再优化
-    //#endregion
-    /**
-     * 加载属性ICON完成
-     * @param args 加载完成的精灵数组
-     */
-    completeAttributeSprite(args:cc.SpriteFrame[]): any {
-        for(let i=0;i<args.length;i++)
-        {
-            this.attrMap.set(args[i].name,args[i]);
-        }
+        this.prefabMap.set(prefab.name,prefab);
         this.completeIndex++;
     }
 

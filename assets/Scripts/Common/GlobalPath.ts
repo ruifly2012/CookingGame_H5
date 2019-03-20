@@ -15,11 +15,14 @@ export class GlobalPath
      * resource里的Stage_Property文件夹路径
      */
     public static STAGE_PROPERTY_Path:string='UI/Stage_Property/';
+    /** 人物大图 */
+    public static ROLE_BIG_MAP:string='UI/Stage_Property/Figure/';
 
     public static ROLE_ATTRIBUTE_ICON_PATH:string='UI/Stage_Property/Attribute/';
     /** 详细面板文件夹路径 */
     public static DETAIL_PANEL_PATH:string='prefabs/Details/';
     public static CONFIG_PATH:string='datas/Config';
+    public static PREFAB_PATH:string='datas/PrefabPath';
     /**
      * 图集资源路径 
      */

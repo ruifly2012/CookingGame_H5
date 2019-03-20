@@ -35,7 +35,7 @@ export class MenuProxy extends Proxy {
     }
 
     configCookMenu() {
-        this.cookMenuMap = DataManager.getInstance().baseMenuMap;
+        this.cookMenuMap = DataManager.getInstance().TableMenuMap;
         this.foodMateials = new Array();
         let foodMataial: FoodMaterialVo = null;
         DataManager.getInstance().PropVoMap.forEach((value, key) => {

@@ -20,7 +20,14 @@ import { MenuEvent } from "../../../Events/MenuEvent";
 import { ServerSimulator } from "../../Missions/ServerSimulator";
 import { CookingStateProtocol, CookingNetwork } from "./CookingNetwork";
 import { CurrencyTask } from "../../Missions/MissionManager";
-import { MakeCookingInfo } from "../../../NetWork/NetMessage/NetMakeCookingInfo";
+import { NetMakeCookingInfo, NetMakeCookingNotify, CookingRewardNotify } from "../../../NetWork/NetMessage/NetMakeCookingInfo";
+import { HttpRequest } from "../../../NetWork/HttpRequest";
+import { RequestType, VerificationResult } from "../../../NetWork/NetDefine";
+import Game from "../../../Game";
+import { TimeTool } from "../../../Tools/TimeTool";
+import { RoleProxy } from "../../Role/Model/RoleProxy";
+import NotificationView from "../../../Common/NotificationView";
+import { ObjectTool } from "../../../Tools/ObjectTool";
 
 export enum CookingStatus
 {
@@ -72,7 +79,7 @@ export class CookingProxy extends Proxy
     private timeStr: string = '00:00';
     public get TimeStr(): string
     {
-        this.timeStr = GameManager.GetTimeLeft2BySecond(this.secondTime);
+        this.timeStr = TimeTool.GetTimeLeft2BySecond(this.secondTime);
         return this.timeStr;
     }
     public cookingStatus: CookingStatus = CookingStatus.Idle;
@@ -80,12 +87,17 @@ export class CookingProxy extends Proxy
     private gradeBonus: any = [];
     //消耗钻石速度，每costDiamondSpeed秒消耗一钻石
     private costDiamondSpeed: number = 0;
+    netMakeCookingInfos: NetMakeCookingInfo[] = [];
+    /** 做菜完成后的访客 */
+    currVisitors: any = null;
+
     /**
      * 
      */
     public constructor()
     {
         super(CookingProxy.name);
+        this.menuProxy = <MenuProxy>Facade.getInstance().retrieveProxy(MenuProxy.name);
     }
 
     /**
@@ -93,13 +105,14 @@ export class CookingProxy extends Proxy
      */
     initProxy()
     {
+        this.menuProxy = <MenuProxy>Facade.getInstance().retrieveProxy(MenuProxy.name);
         this.gradeBonus = DataManager.getInstance().GlobaVar.get(5)._Value.split(',');
         this.costDiamondSpeed = Number(DataManager.getInstance().GlobaVar.get(1)._Value);
-        if (DataManager.getInstance().updateCookingData().size > 0)
+        let self = this;
+        HttpRequest.getInstance().requestPost(RequestType.cook_info, function (e: NetMakeCookingNotify)
         {
-            this.cookingMap = DataManager.getInstance().updateCookingData();
-            this.calaBusinessMenu();
-        }
+            self.initServerProxy(e);
+        });
         DataManager.getInstance().SkillVarMap.forEach((skilldata, id) =>
         {
             if (id != 400101 && id != 500101)
@@ -107,25 +120,69 @@ export class CookingProxy extends Proxy
                 this.skillMap.set(id, skilldata);
             }
         });
-
-        //this.checkTime();
     }
 
-    checkTime()
+    initServerProxy(infos: NetMakeCookingNotify)
+    {
+        this.currVisitors = infos.visitorReawrd;
+        this.menuProxy = <MenuProxy>Facade.getInstance().retrieveProxy(MenuProxy.name);
+        let roleProxy: RoleProxy = <RoleProxy>Facade.getInstance().retrieveProxy(RoleProxy.name);
+        let roleArr: number[] = [];
+        this.cookingMap = new Map();
+        let menu: CookMenuVo = null;
+        let role: PresonDataBase = null;
+        for (let i = 0; i < infos.data.length; i++)
+        {
+            let _info: NetMakeCookingInfo = infos.data[i];
+            menu = this.menuProxy.getCookMenuVo(_info.menuID);
+            role = roleProxy.roleData.get(_info.roleID);
+            menu._Amount = _info.amount;
+            if (roleArr.length == 0)
+            {
+                roleArr.push(_info.roleID);
+                this.cookingMap.set(0, new CookingVo(0));
+                this.CookingMap.get(0).setRoleMenu(role, menu, _info.price, _info.time, _info.amount);
+            }
+            else
+            {
+                let seat: number = 0;
+                if (roleArr.indexOf(_info.roleID) != -1)
+                {
+                    seat = roleArr.indexOf(_info.roleID);
+                }
+                else
+                {
+                    roleArr.push(_info.roleID);
+                    seat = roleArr.indexOf(_info.roleID);
+                    this.cookingMap.set(seat, new CookingVo(seat));
+                }
+                this.CookingMap.get(seat).setRoleMenu(role, menu, _info.price, _info.time, _info.amount);
+            }
+        }
+        this.calaBusinessMenu();
+        this.checkTime(infos.remainTime);
+    }
+
+    initServerData(netMakeCookingInfos: NetMakeCookingInfo[])
+    {
+
+    }
+
+    checkTime(_remainTime: number)
     {
         let protocol: CookingStateProtocol = new CookingStateProtocol();
         protocol.time = '0';
         let num = GameManager.TimeEvent(CookingEvent.COOKING_ID);
-        if (num != null && num != -1 && num != 0)
+        num = 0;
+        if (_remainTime != null && _remainTime != -1 && _remainTime != 0)
         {
             this.cookingStatus = CookingStatus.Cooking;
-            this.secondTime = num;
-            let self = this;
+            this.secondTime = Number(_remainTime);
             protocol.state = CookingStatus.CookingStart;
-            protocol.time = GameManager.GetTimeLeft2BySecond(self.secondTime);
+            protocol.time = GameManager.GetTimeLeft2BySecond(this.secondTime);
             this.interTime = setInterval(this.onUpdate.bind(this), 1000);
         }
-        else if (num == 0)
+        else if (_remainTime == 0)
         {
             if (this.cookingMap.size == 0)
             {
@@ -136,7 +193,6 @@ export class CookingProxy extends Proxy
             }
             else
             {
-
                 this.secondTime = 0;
                 this.cookingEnd();
                 protocol.state = CookingStatus.CookingEnd;
@@ -144,33 +200,45 @@ export class CookingProxy extends Proxy
         }
 
         CookingNetwork.getInstance().CookingProtocol = protocol;
+        this.sendNotification(GameCommand.UPDATE_COOKING_STATE, protocol);
     }
 
     interTime = null;
     startCooking()
     {
-        this.CookingMap.forEach((cookingVo, id) =>
+        if (Game.Instance.isConnectServer)
         {
-            if (cookingVo == null || cookingVo == undefined) return;
-            cookingVo.role._NowState = FigureStatus.Cook;
-            cookingVo.role._CurrMission = FigureStatus.Cook;
-            GameStorage.setItemJson(CookingEvent.COOKING_DATA_ID + id.toString(), cookingVo);
-            DataManager.getInstance().changRoleStatus(cookingVo.role._ID, FigureStatus.Cook);
-            //[{ roleID: 101, menuArr: [{ menuID: 1, num: 10 },{menuID:2,num:20}] },{roleID:102,menuArr:[{menuID:10,num:30}]}]
-        });
-        this.menuProxy.saveFoodMaterial();
-        GameStorage.setItem('priceSum', this.priceSum);
-        GameStorage.setItem('moneySum', this.moneySum);
-        this.cookingStatus = CookingStatus.Cooking;
-        GameManager.TimeEvent(CookingEvent.COOKING_ID, this.secondTime);
-        this.sendNotification(CookingEvent.COOKING_START, GameManager.GetTimeLeft2BySecond(this.secondTime));
-        CookingNetwork.getInstance().CookingProtocol = new CookingStateProtocol(CookingStatus.CookingStart, GameManager.GetTimeLeft2BySecond(this.secondTime));
-        this.interTime = setInterval(this.onUpdate.bind(this), 1000);
+            let self = this;
+            HttpRequest.getInstance().requestPost(RequestType.cook_start, function (result: VerificationResult)
+            {
+                console.dir(result);
+                if (result == VerificationResult.Success)
+                {
+                    self.menuProxy = <MenuProxy>Facade.getInstance().retrieveProxy(MenuProxy.name);
+                    self.CookingMap.forEach((cookingVo, id) =>
+                    {
+                        if (cookingVo == null || cookingVo == undefined) return;
+                        cookingVo.role._NowState = FigureStatus.Cook;
+                        cookingVo.role._CurrMission = FigureStatus.Cook;
+                        GameStorage.setItemJson(CookingEvent.COOKING_DATA_ID + id.toString(), cookingVo);
+                        DataManager.getInstance().changRoleStatus(cookingVo.role._ID, FigureStatus.Cook);
+                    });
+                    self.menuProxy.saveFoodMaterial();
+                    GameStorage.setItem('priceSum', self.priceSum);
+                    GameStorage.setItem('moneySum', self.moneySum);
+                    self.cookingStatus = CookingStatus.Cooking;
+                    GameManager.TimeEvent(CookingEvent.COOKING_ID, self.secondTime);
+                    CookingNetwork.getInstance().CookingProtocol = new CookingStateProtocol(CookingStatus.CookingStart, GameManager.GetTimeLeft2BySecond(self.secondTime));
+                    self.interTime = setInterval(self.onUpdate.bind(self), 1000);
+                }
+                else NotificationView.Instance.showNotify('警告', '检测到数据异常');
+            }, JSON.stringify(self.netMakeCookingInfos));
+        }
+
     }
 
     onUpdate()
     {
-        //Log.Info('dt.....',dt);
         if (this.cookingStatus == CookingStatus.Cooking && this.secondTime >= 0)
         {
             this.secondTime -= 1;
@@ -179,17 +247,51 @@ export class CookingProxy extends Proxy
             if (this.secondTime <= 0)
             {
                 this.secondTime = 0;
-                this.cookingEnd();
+                let self = this;
+                HttpRequest.getInstance().requestPost(RequestType.cook_info, function (info: NetMakeCookingNotify)
+                {
+                    if (info.remainTime <= 1)
+                    {
+                        console.log(info.visitorReawrd);
+                        if(info.visitorReawrd!=null) this.currVisitors = info.visitorReawrd;
+                        self.cookingEnd();
+                    }
+                    else
+                    {
+                        NotificationView.Instance.showNotify('警告：', '数据出现异常');
+                    }
+                });
             }
         }
+    }
 
+    /** 做菜钻石加速完成 */
+    speedUpCooking()
+    {
+        let self = this;
+        HttpRequest.getInstance().requestPost(RequestType.cook_quicken, function (result: VerificationResult)
+        {
+            if (result == VerificationResult.Success)
+            {
+                HttpRequest.getInstance().requestPost(RequestType.cook_info, function (e: NetMakeCookingNotify)
+                {
+                    console.log(e.visitorReawrd);
+                    if(e.visitorReawrd!=null) this.currVisitors = e.visitorReawrd;
+                    self.cookingEnd();
+                });
+            }
+            else
+            {
+                NotificationView.Instance.showNotify('警告：', '数据出现异常');
+            }
+        });
     }
 
     cookingEnd()
     {
         clearInterval(this.interTime);
         this.cookingStatus = CookingStatus.CookingEnd;
-        //Log.Info('--------------------做菜完成--------------------');
+        Log.Info('--------------------做菜完成--------------------');
         this.sendNotification(CookingEvent.COOKING_END);
         this.CookingMap.forEach((cookingVo, id) =>
         {
@@ -212,7 +314,6 @@ export class CookingProxy extends Proxy
         {
             console.info('setCookingSeat', '下架人物');
             let id: number = this.cookingMap.get(this.currCookingSeat).getRoleID();
-
             this.cookingMap.get(this.currCookingSeat).clearRole();
             this.cookingMap.delete(this.currCookingSeat);
         }
@@ -233,6 +334,13 @@ export class CookingProxy extends Proxy
     {
         //if (this.cookingRoleNum == 0 && this.currCookingSeat == 0) return this.currCookingSeat;
         return this.currCookingSeat;
+    }
+
+    public setRoleWithID(id: number)
+    {
+        let roleProxy: RoleProxy = <RoleProxy>Facade.getInstance().retrieveProxy(RoleProxy.name);
+        let role: PresonDataBase = roleProxy.roleData.get(id);
+        this.setSeatRoleVo(role);
     }
 
     /**
@@ -491,6 +599,7 @@ export class CookingProxy extends Proxy
      */
     public calaBusinessMenu()
     {
+        this.netMakeCookingInfos = [];
         this.secondTime = 0;
         this.priceSum = 0;
         this.moneySum = 0;
@@ -507,12 +616,22 @@ export class CookingProxy extends Proxy
                 roleMenuNum += 1;
                 cookMenuVo.menuGrade(cookingVo.role.CookingSkillVals);
                 //装备加成
-                let roleEquipAddition:number=cookingVo.role.getValueFromMenuType(cookMenuVo._Type)/100;
+                let roleEquipAddition: number = cookingVo.role.getValueFromMenuType(cookMenuVo._Type) / 100;
                 //技能加成
-                let skillAddition:number=this.hasAddition(cookingVo.role._Skill, cookMenuVo._Type, cookingVo.role._AdvanceLevel);
-                let _menuPrice: number = Math.floor(cookMenuVo._Price * (1 + skillAddition+roleEquipAddition));
+                let skillAddition: number = this.hasAddition(cookingVo.role._Skill, cookMenuVo._Type, cookingVo.role._AdvanceLevel);
+                let _menuPrice: number = Math.floor(cookMenuVo._Price * (1 + skillAddition + roleEquipAddition));
                 singleRolePrice += _menuPrice * cookMenuVo._Amount * this.gradeBonus[cookMenuVo.GradeNum - 1];
                 this.secondTime += cookMenuVo._SingleTime * cookMenuVo._Amount;
+                let info: NetMakeCookingInfo = new NetMakeCookingInfo();
+
+                info.roleID = cookingVo.role._ID;
+                info.menuID = cookMenuVo._ID;
+                info.grade = cookMenuVo.GradeNum;
+                info.price = _menuPrice * cookMenuVo._Amount * this.gradeBonus[cookMenuVo.GradeNum - 1];
+                info.amount = cookMenuVo._Amount;
+                info.time = cookMenuVo._SingleTime * cookMenuVo._Amount;
+                this.netMakeCookingInfos.push(info);
+
             });
             if (roleMenuNum > 0)
             {
@@ -526,9 +645,7 @@ export class CookingProxy extends Proxy
         });
         this.secondTime = Math.floor(this.secondTime * (1 - _timeReduce));
         this.moneySum = Math.ceil((this.secondTime) / this.costDiamondSpeed);
-        Log.Info('最终总时长', this.TimeStr);
 
-        //console.log(JSON.stringify(infos));
     }
 
     //#endregion
@@ -552,13 +669,18 @@ export class CookingProxy extends Proxy
      */
     collectEarn()
     {
-        this.collectCoin();
-        GameManager.TimeEvent(CookingEvent.COOKING_ID, -1);
-        this.updateMissionData();
-        this.clearCookingMap();
-        this.cookingStatus = CookingStatus.Idle;
-        this.sendNotification(CookingEvent.COOKING_IDLE);
-        CookingNetwork.getInstance().CookingProtocol = new CookingStateProtocol(CookingStatus.Idle, GameManager.GetTimeLeft2BySecond(this.secondTime));
+        let self = this;
+        HttpRequest.getInstance().requestPost(RequestType.cook_reward, function (info: CookingRewardNotify)
+        {
+            self.collectCoin(info.playerGold);
+            GameManager.TimeEvent(CookingEvent.COOKING_ID, -1);
+            self.updateMissionData();
+            self.clearCookingMap();
+            self.cookingStatus = CookingStatus.Idle;
+            self.sendNotification(CookingEvent.COOKING_IDLE);
+            CookingNetwork.getInstance().CookingProtocol = new CookingStateProtocol(CookingStatus.Idle, GameManager.GetTimeLeft2BySecond(self.secondTime));
+        });
+
     }
 
     updateMissionData()
@@ -570,21 +692,41 @@ export class CookingProxy extends Proxy
     }
 
     /** 收益 */
-    collectCoin()
+    collectCoin(_coin: number)
     {
-        let num = CurrencyManager.getInstance().Coin + this.PriceSum;
-        CurrencyManager.getInstance().Coin = num;
+        //let num = CurrencyManager.getInstance().Coin + this.PriceSum;
+        CurrencyManager.getInstance().Coin = _coin;
         this.sendNotification(GameCommand.UPDATE_CURRENCY);
     }
 
-    /** 显示访客 */
+    /**
+     * 
+     * @param visitorInfo 接受的key-value数组
+     * @param key 访客ID
+     * @param value 道具ID
+     */
     showVisitor()
     {
         let time = 0; //菜谱制作次数
         let vos: CookMenuVo[] = this.getSelectedMenuVo();
         let visitors: Array<VisitorDataBase> = new Array();
         let serverdatas: number[] = [];
-        for (let i = 0; i < vos.length; i++)
+        if(this.currVisitors==null) return ;
+        let info=ObjectTool.parseKeyValue(this.currVisitors);
+        console.log(info);
+        for (let i = 0; i < info.length; i++)
+        {
+            const element = info[i];
+            let visitor: VisitorDataBase = DataManager.getInstance().VisitorMap.get(element[0]);
+            visitor._ID = element[0];
+            visitor._RuneID = element[1];
+            visitors.push(visitor);
+            GameStorage.setItem(element._ID.toString(), 1);
+            serverdatas.push(visitor._ID);
+            Log.Info('中奖了。。。');
+        }
+
+        /* for (let i = 0; i < vos.length; i++)
         {
             const element = vos[i];
             time = Number(GameStorage.getItem(element._ID.toString()));
@@ -603,10 +745,7 @@ export class CookingProxy extends Proxy
                 time += 1;
                 GameStorage.setItem(element._ID.toString(), time);
             }
-            /* let visitor: VisitorDataBase = DataManager.getInstance().VisitorMap.get(element._VisitorID);
-            visitor._RuneID = element._RuneID;
-            visitors.push(visitor); */
-        }
+        } */
         if (serverdatas.length != 0) ServerSimulator.getInstance().upLoadVisitor(serverdatas);
         this.sendNotification(MenuEvent.SHOW_VISITOR, visitors);
     }

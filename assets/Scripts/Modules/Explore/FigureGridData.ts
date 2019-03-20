@@ -82,7 +82,7 @@ export default class FigureGridData extends cc.Component {
                 self.node.getComponent(cc.Sprite).spriteFrame = spriteFrame;
             });
         }
-        if (this.status_label.string != '已选中') this.status_label.string = pd._NowState;
+        //if (this.status_label.string != '已选中') this.status_label.string = pd._NowState.toString();
         /**设置属性参数 */
 
         if (attribute != null) {

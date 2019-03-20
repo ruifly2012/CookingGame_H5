@@ -4,6 +4,10 @@ import { System_Event, EventType } from "../../../Events/EventType";
 import { ObjectTool } from "../../../Tools/ObjectTool";
 import { MenuEvent } from "../../../Events/MenuEvent";
 import { UIPanelEnum } from "../../../Enums/UIPanelEnum";
+import { Facade } from "../../../MVC/Patterns/Facade/Facade";
+import { LobbyViewMediator } from "./LobbyViewMediator";
+import { GameCommand } from "../../../Events/GameCommand";
+import { LobbyCommand } from "../Controller/LobbyCommand";
 
 const { ccclass, property } = cc._decorator;
 
@@ -58,8 +62,10 @@ export default class LobbyView extends cc.Component
         this.timeTxt = ObjectTool.FindObjWithParent('cookingBtn/timeTxt', this.node).getComponent(cc.Label);
         this.missionRed = this.node.getChildByName('missionRed');
         this.missionRed.active = false;
-
         this.timeTxt.node.active = false;
+
+        Facade.getInstance().registerMediator(new LobbyViewMediator(this));
+        Facade.getInstance().registerCommand(GameCommand.LOBBY_COMMAND, LobbyCommand);
     }
 
     setMissionRed(target: number)

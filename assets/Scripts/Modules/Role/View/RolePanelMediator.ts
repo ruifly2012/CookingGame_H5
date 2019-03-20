@@ -24,129 +24,153 @@ import SkillDataBase from "../../../Common/VO/SkillDataBase";
 import { EquipDataBase } from "../../../Common/VO/EquipDataBase";
 import { ItemVo } from "../../../Common/Items/ItemVo";
 import EquipmentDetail from "./Panels/EquipmentDetail";
+import { PropVo } from "../../../Common/VO/PropVo";
+import { HttpRequest } from "../../../NetWork/HttpRequest";
+import { RequestType } from "../../../NetWork/NetDefine";
 
 
 
 /**
  * 
  */
-export class RolePanelMediator extends Mediator {
+export class RolePanelMediator extends Mediator
+{
     proxyData: RoleProxy;
     roleItemList: Array<RoleItemView> = new Array();
-    currRole:PresonDataBase=new PresonDataBase();
+    currRole: PresonDataBase = new PresonDataBase();
+    dataManager:DataManager;
 
     /**
      * 
      * @param view 
      */
-    public constructor(view: any) {
+    public constructor(view: any)
+    {
         super(view);
         this.setViewComponent(view.getComponent(RolePanel));
+        this.dataManager=DataManager.getInstance();
         this.mediatorName = RolePanelMediator.name;
         this.proxyData = <RoleProxy>Facade.getInstance().retrieveProxy(RoleProxy.name);
 
         this.getViewComponent().filterHandle = this.filterHandle.bind(this);
-        this.getViewComponent().upgradeEvent = this.upgradeEvent.bind(this);
-        this.getViewComponent().fullUpgradeEvent = this.fullUpgradeEvent.bind(this);
-        this.getViewComponent().advanceEvent = this.advanceEvent.bind(this);
+        this.getViewComponent().node.on(RoleInfoEvent.UPGRADE_LEVEL,this.upgradeLevelEvent,this);
+        this.getViewComponent().node.on(RoleInfoEvent.UPGRADE_FULL_LEVEL,this.upgradeFullLevelEvent,this);
+        this.getViewComponent().node.on(RoleInfoEvent.UPGRADE_ADVANCE_LEVEL,this.upgradeAdvanceLevelEvent,this);
+        
         this.getViewComponent().node.on(RoleInfoEvent.ADVANCE_UP, this.affirmAdvance, this);
-        this.getViewComponent().reloadEquipDelegate=this.showRequip.bind(this);
+        this.getViewComponent().reloadEquipDelegate = this.showRequip.bind(this);
+
         this.getViewComponent().node.on(RoleInfoEvent.CLICK_EQUIP,this.clickEquipHandle,this);
         this.getViewComponent().node.on(RoleInfoEvent.RELOAD_EQUIP,this.reloadRequip,this);
         this.getViewComponent().node.on(RoleInfoEvent.UNLOAD_EQUIP,this.unloadEquip,this);
         this.getViewComponent().node.on(RoleInfoEvent.REPLACE_EQUIP,this.replaceEquip,this);
     }
 
-    
+    addlistener(_type:string,_function:Function,_target?:any)
+    {
+        this.getViewComponent().node.on(_type,_function,_target);
+    }
 
     /**
-     * 升级操作
+     * 升级事件
      * @param id 
      */
-    upgradeEvent(id) {
+    upgradeLevelEvent(e:cc.Event.EventCustom)
+    {
         if (CurrencyManager.getInstance().Coin < this.proxyData.upgradeLevelCost(this.getViewComponent().currRoleID)) return;
-        this.proxyData.upgradeAttr(this.getViewComponent().currRoleID);
-        this.updateUpgradeInfo(this.getViewComponent().currRoleID);
+        this.proxyData.upgradeLevel(this.getViewComponent().currRoleID);
+        //this.updateUpgradeInfo(this.getViewComponent().currRoleID);
+        
     }
 
     /**
-     * 升满级操作
+     * 升满级事件
      * @param e 
      */
-    fullUpgradeEvent(e) {
-        if (CurrencyManager.getInstance().Coin < this.proxyData.upgradeFullCost(this.getViewComponent().currRoleID)) return;
-        this.proxyData.fullUpgradeAttr(this.getViewComponent().currRoleID);
-        this.updateUpgradeInfo(this.getViewComponent().currRoleID);
+    upgradeFullLevelEvent(e:cc.Event.EventCustom)
+    {
+        if (CurrencyManager.getInstance().Coin < this.proxyData.upgradeFullCost(this.currRole._ID)) return;
+        this.proxyData.fullUpgradeAttr(this.currRole._ID);
+        this.updateUpgradeInfo(this.currRole._ID);
+        
     }
 
     /**
+     * 升阶事件
      * 点击升阶，显示升阶面板
      * @param e 
      */
-    advanceEvent(e) {
-        let vo: RoleAdvanceVo = this.proxyData.getAdvanceVo(this.getViewComponent().currRoleID);
+    upgradeAdvanceLevelEvent(e:cc.Event.EventCustom)
+    {
+        let vo: RoleAdvanceVo = this.proxyData.getAdvanceVo(this.currRole._ID);
         //Log.Info(vo._PropID);
-        let iconName = DataManager.getInstance().PropVoMap.get(vo._PropID)._ResourceName;
+        let iconName = this.dataManager.PropVoMap.get(vo._PropID)._ResourceName;
         let icon: cc.SpriteFrame = this.proxyData.getSpriteFromAtlas(iconName);
-        let id:number=this.proxyData.GetRoleFromID(Number(this.getViewComponent().currRoleID))._Skill;
-        let skill:SkillDataBase=DataManager.getInstance().SkillVarMap.get(Number(id));
-        this.getViewComponent().showAdvancePanel(icon, String(this.proxyData.upgradeLevelCost(this.getViewComponent().currRoleID)), String(vo._PropNum), skill._Describe);
+        let id: number = this.proxyData.GetRoleFromID(Number(this.currRole._ID))._Skill;
+        let skill: SkillDataBase = this.dataManager.SkillVarMap.get(Number(id));
+        this.getViewComponent().showAdvancePanel(icon, String(this.proxyData.upgradeLevelCost(this.currRole._ID)), String(vo._PropNum), skill._Describe);
     }
 
     /**
      * 确认升阶操作，进行升阶
      * @param e 
      */
-    affirmAdvance(e): any {
+    affirmAdvance(e): any
+    {
         this.getViewComponent().advancePanel.active = false;
-        this.proxyData.upgradeAttr(this.getViewComponent().currRoleID);
-        this.proxyData.takeoutAdvanceProp(this.getViewComponent().currRoleID);
+        this.proxyData.upgradeAttr(this.currRole._ID);
+        this.proxyData.takeoutAdvanceProp(this.currRole._ID);
+        
     }
 
 
     /**
      * 列出自己感兴趣的通知
      */
-    listNotificationInterests(): string[] {
-        return [UIPanelEnum.RolePanel,
-        RoleInfoEvent.LEVELT_UP,
-        RoleInfoEvent.ADVANCE_UP,
-        RoleInfoEvent.FULL_LEVEL_ADVANCE];
+    listNotificationInterests(): string[]
+    {
+        return [
+            UIPanelEnum.RolePanel,
+            RoleInfoEvent.INIT_ROLE,
+            RoleInfoEvent.LEVELT_UP,
+            RoleInfoEvent.ADVANCE_UP,
+            RoleInfoEvent.FULL_LEVEL_ADVANCE
+        ];
     }
 
     /**
      * 处理自己感兴趣的通知
      * @param notification 
      */
-    handleNotification(notification: INotification): void {
+    handleNotification(notification: INotification): void
+    {
         let currItem: RoleItemView = this.roleItemList.find(o => o.ID == this.getViewComponent().currRoleID);
-        switch (notification.getName()) {
+        switch (notification.getName())
+        {
             case UIPanelEnum.RolePanel:
-                this.proxyData.getOwnerRole();
+                //this.proxyData.getOwnerRole();
+                this.initRole();
+                this.filterHandle(null);
+                break;
+            case RoleInfoEvent.INIT_ROLE:
                 this.initRole();
                 this.filterHandle(null);
                 break;
             case RoleInfoEvent.LEVELT_UP:
-                this.SetInfo(this.getViewComponent().currRoleID);
+                this.updateUpgradeInfo(this.getViewComponent().currRoleID);
+                this.showRoleDetailInfo(this.getViewComponent().currRoleID);
                 this.getViewComponent().showLevelBtn();
-                currItem.levelTxt.string = this.getViewComponent().levelTxt.string;
-                if (this.getViewComponent().currProperty != null) currItem.attrNumTxt.string = this.proxyData.GetRoleFromID(currItem.ID)[this.getViewComponent().currProperty];
+                this.setConorShowAttr();
                 break;
             case RoleInfoEvent.ADVANCE_UP:
                 this.getViewComponent().showAdvanceButton();
-                let vo: RoleAdvanceVo = this.proxyData.getAdvanceVo(this.getViewComponent().currRoleID);
-                let actualPropNum: number = DataManager.getInstance().PropVoMap.get(vo._PropID)._Amount;
                 this.updateAdvanceInfo();
-                currItem.levelTxt.string = this.getViewComponent().levelTxt.string;
-                if (this.getViewComponent().currProperty != null) currItem.attrNumTxt.string = this.proxyData.GetRoleFromID(currItem.ID)[this.getViewComponent().currProperty];
-                if (actualPropNum < vo._PropNum) this.getViewComponent().disEnableAdvance();
-                else this.getViewComponent().enableAdvance();
+                this.setConorShowAttr();
                 break;
             case RoleInfoEvent.FULL_LEVEL_ADVANCE:
                 Log.Info('满阶级满等级通知。。。');
-                this.SetInfo(this.getViewComponent().currRoleID);
-                currItem.levelTxt.string = this.getViewComponent().levelTxt.string;
-                if (this.getViewComponent().currProperty != null) currItem.attrNumTxt.string = this.proxyData.GetRoleFromID(currItem.ID)[this.getViewComponent().currProperty];
+                this.showRoleDetailInfo(this.getViewComponent().currRoleID);
+                this.setConorShowAttr();
                 this.getViewComponent().hideUpgradeBtn();
                 break;
             default:
@@ -157,7 +181,8 @@ export class RolePanelMediator extends Mediator {
     /**
      * 初始化人物列表
      */
-    initRole() {
+    initRole()
+    {
         this.setViewComponent(UIManager.getInstance().getUIPanel(UIPanelEnum.RolePanel).getComponent(RolePanel));
         this.roleItemList = new Array();
         let prefab: cc.Prefab = AssetManager.getInstance().prefabMap.get('roleHeadItem');
@@ -165,7 +190,8 @@ export class RolePanelMediator extends Mediator {
         let _node: cc.Node = null;
         let _professionSprite: cc.SpriteFrame = null;
         let _roleSprite: cc.SpriteFrame = null;
-        for (let i = 0; i < this.proxyData.roleList.length; i++) {
+        for (let i = 0; i < this.proxyData.roleList.length; i++)
+        {
             data = this.proxyData.roleList[i];
             _node = ObjectTool.instanceWithPrefab('role' + i, prefab, this.getViewComponent().itemContent);
             _node.getComponent(RoleItemView).ID = data._ID;
@@ -175,8 +201,9 @@ export class RolePanelMediator extends Mediator {
             _node.getComponent(RoleItemView).setInfo(data._ID, _roleSprite, data._Level, _professionSprite);
             _node.on(System_Event.TOUCH_START, this.clickHandle, this);
             _node.getComponent(RoleItemView).pressHandle = function (e) { this.pressHandle(e); }.bind(this);
-            if (i === 0) {
-                this.SetInfo(_node.getComponent(RoleItemView).ID);
+            if (i === 0)
+            {
+                this.showRoleDetailInfo(_node.getComponent(RoleItemView).ID);
             }
             this.roleItemList.push(_node.getComponent(RoleItemView));
         };
@@ -187,10 +214,12 @@ export class RolePanelMediator extends Mediator {
      * 长按显示人物详细面板
      * @param id 人物ID
      */
-    pressHandle(id: any): any {
+    pressHandle(id: any): any
+    {
         let self = this;
         ResourceManager.getInstance().loadResources('prefabs/roleModule/DetailAttrPanel', cc.Prefab
-            , function (prefab: cc.Prefab) {
+            , function (prefab: cc.Prefab)
+            {
                 let detail: cc.Node = ObjectTool.instanceWithPrefab('detailPanel', prefab, self.getViewComponent().node);
                 detail.getComponent(RoleItemDetailPanel).setWithID(Number(id));
             });
@@ -200,36 +229,38 @@ export class RolePanelMediator extends Mediator {
      * 
      * @param data 
      */
-    clickHandle(data: cc.Event.EventTouch): any {
+    clickHandle(data: cc.Event.EventTouch): any
+    {
         let item: RoleItemView = <RoleItemView>data.target.getComponent(RoleItemView);
-        this.SetInfo(item.ID);
+        this.showRoleDetailInfo(item.ID);
         let basedata: PresonDataBase = this.proxyData.GetRoleFromID(item.ID);
-        if(basedata._Level<60) this.updateAdvanceInfo();
+        if (basedata._Level <= 40) this.updateAdvanceInfo();
     }
 
     /**
      * 显示人物属性面板信息
      * @param item 
      */
-    SetInfo(_ID: number) {
-        //let index: number = item.ID;
-        let basedata: PresonDataBase = this.proxyData.GetRoleFromID(_ID);
-        this.currRole=basedata;
+    showRoleDetailInfo(_ID: number)
+    {
+        let basedata: PresonDataBase = this.proxyData.GetRoleFromID(Number(_ID));
+        this.currRole = basedata;
+        this.getViewComponent().currRoleID=this.currRole._ID;
         let rolemap: cc.SpriteFrame = AssetManager.getInstance().getSpriteFromAtlas(basedata._ResourceName + '_big');
         let battle_arr: any = this.proxyData.SortBattleAttr([basedata._Power, basedata._Agility, basedata._PhysicalPower, basedata._Will]);
         let cook_arr: any = this.proxyData.sortCookingAttr([basedata._Cooking, basedata._Vigor, basedata._Savvy, basedata._Luck]);
-        for (let i = 0; i < 4; i++) {
-            if(basedata.incrementMap[i]!=0) battle_arr[i].val=(battle_arr[i].val-basedata.incrementMap[i])+'+'+basedata.incrementMap[i];
-            if(basedata.incrementMap[i+4]!=0) cook_arr[i].val=(cook_arr[i].val-basedata.incrementMap[i+4])+'+'+basedata.incrementMap[i+4];
+        for (let i = 0; i < 4; i++)
+        {
+            if (basedata.incrementMap[i] != 0) battle_arr[i].val = (battle_arr[i].val - basedata.incrementMap[i]) + '+' + basedata.incrementMap[i];
+            if (basedata.incrementMap[i + 4] != 0) cook_arr[i].val = (cook_arr[i].val - basedata.incrementMap[i + 4]) + '+' + basedata.incrementMap[i + 4];
         }
         this.updateSelectStatus(_ID);
         this.getViewComponent().setRoleBaseInfo(basedata, rolemap);
-        this.getViewComponent().setBattleAttr(battle_arr);
-        this.getViewComponent().setCookingAttr(cook_arr);
-        if(basedata.HasEquip) this.getViewComponent().uploadEquipIcon(AssetManager.getInstance().getSpriteFromAtlas(basedata._Equip._Icon));
+        this.getViewComponent().showChangeAttribute(basedata._Level,battle_arr,cook_arr);
+        if (basedata.HasEquip) this.getViewComponent().uploadEquipIcon(AssetManager.getInstance().getSpriteFromAtlas(basedata._Equip._Icon));
         else this.getViewComponent().hideEquipIcon();
-        
-        if (basedata._Level == 20 || basedata._Level == 30 || basedata._Level == 40) this.getViewComponent().showAdvanceButton();
+
+        if (basedata._Level == 20 || basedata._Level == 40) this.getViewComponent().showAdvanceButton();
         else if (basedata._Level == 60) this.getViewComponent().hideUpgradeBtn();
         else this.getViewComponent().showLevelBtn();
         this.updateUpgradeInfo(_ID);
@@ -239,10 +270,12 @@ export class RolePanelMediator extends Mediator {
      * 更新人物选择状态
      * @param id 
      */
-    updateSelectStatus(id: number) {
+    updateSelectStatus(id: number)
+    {
         let length = this.getViewComponent().itemContent.childrenCount;
         let itemview: RoleItemView = null;
-        for (let i = 0; i < length; i++) {
+        for (let i = 0; i < length; i++)
+        {
             itemview = this.getViewComponent().itemContent.getChildByName('role' + i).getComponent(RoleItemView);
             if (itemview.ID === id) itemview.selected.active = true;
             else itemview.selected.active = false;
@@ -252,130 +285,142 @@ export class RolePanelMediator extends Mediator {
     /**
      * 更新升阶信息
      */
-    updateAdvanceInfo() {
-        let vo: RoleAdvanceVo = this.proxyData.getAdvanceVo(this.getViewComponent().currRoleID);
-        let actualPropNum: number = DataManager.getInstance().PropVoMap.get(vo._PropID)._Amount;
-        let iconName = DataManager.getInstance().PropVoMap.get(vo._PropID)._ResourceName;
+    updateAdvanceInfo()
+    {
+        let vo: RoleAdvanceVo = this.proxyData.getAdvanceVo(Number(this.currRole._ID));
+        let prop:PropVo=this.dataManager.PropVoMap.get(vo._PropID);
+        let actualPropNum: number = prop._Amount;
+        let iconName = prop._ResourceName;
         let icon: cc.SpriteFrame = this.proxyData.getSpriteFromAtlas(iconName);
-        this.getViewComponent().setAdvanceTxt(String(this.proxyData.upgradeLevelCost(this.getViewComponent().currRoleID)), icon, actualPropNum + '/' + vo._PropNum);
-        this.SetInfo(this.getViewComponent().currRoleID);
+        this.getViewComponent().setAdvanceTxt(String(this.proxyData.upgradeLevelCost(this.currRole._ID)), icon, actualPropNum + '/' + vo._PropNum);
+        this.showRoleDetailInfo(this.getViewComponent().currRoleID);
         if (actualPropNum < vo._PropNum) this.getViewComponent().disEnableAdvance();
         else this.getViewComponent().enableAdvance();
+    }
+
+    /** 人物item左上角属性的显示 */
+    setConorShowAttr()
+    {
+        let currItem: RoleItemView = this.roleItemList.find(o => o.ID == this.getViewComponent().currRoleID);
+        if (this.getViewComponent().currProperty != null) 
+            currItem.attrNumTxt.string = this.proxyData.GetRoleFromID(currItem.ID)[this.getViewComponent().currProperty];
     }
 
     /**
      * 更新升级事件
      * @param _ID 
      */
-    updateUpgradeInfo(_ID: number) {
+    updateUpgradeInfo(_ID: number)
+    {
         let levelCost = this.proxyData.upgradeLevelCost(_ID);
         let fullCost = this.proxyData.upgradeFullCost(_ID);
-        if (CurrencyManager.getInstance().Coin < levelCost) {
+        if (CurrencyManager.getInstance().Coin < levelCost)
+        {
 
             this.getViewComponent().setUpgradeTxt(String(levelCost), String(fullCost), cc.Color.GRAY, cc.Color.RED, cc.Color.GRAY, cc.Color.RED);
-            this.getViewComponent().upgradeBtn.getComponent(cc.Button).interactable = false;
-            this.getViewComponent().upFullGradeBtn.getComponent(cc.Button).interactable = false;
+            this.getViewComponent().upgradeBtnInteractable(false,false);
         }
-        else if (CurrencyManager.getInstance().Coin > levelCost && CurrencyManager.getInstance().Coin < fullCost) {
+        else if (CurrencyManager.getInstance().Coin > levelCost && CurrencyManager.getInstance().Coin < fullCost)
+        {
             this.getViewComponent().setUpgradeTxt(String(levelCost), String(fullCost), cc.Color.GRAY, cc.Color.RED);
-            this.getViewComponent().upgradeBtn.getComponent(cc.Button).interactable = true;
-            this.getViewComponent().upFullGradeBtn.getComponent(cc.Button).interactable = false;
+            this.getViewComponent().upgradeBtnInteractable(true,false);
         }
-        else {
-
+        else
+        {
             this.getViewComponent().setUpgradeTxt(String(levelCost), String(fullCost));
-            this.getViewComponent().upgradeBtn.getComponent(cc.Button).interactable = true;
-            this.getViewComponent().upFullGradeBtn.getComponent(cc.Button).interactable = true;
+            this.getViewComponent().upgradeBtnInteractable(true,true);
         }
 
     }
 
     showRequip()
     {
-        let equips:Array<EquipDataBase>=Array.from(DataManager.getInstance().EquipTableMap.values());
-        let voArr:Array<ItemVo>=new Array();
-        let vo:ItemVo;
-        let equip:EquipDataBase;
-        for (let i = 0; i < equips.length; i++) {
-            vo=new ItemVo();
-            equip=equips[i];
-            vo._ID=equip._ID;
-            vo._name=equip._Name;
-            vo._sprite=AssetManager.getInstance().getSpriteFromAtlas(equip._Icon);
-            vo._value=0;
+        let equips: Array<EquipDataBase> = Array.from(this.dataManager.EquipTableMap.values());
+        let voArr: Array<ItemVo> = new Array();
+        let vo: ItemVo;
+        let equip: EquipDataBase;
+        for (let i = 0; i < equips.length; i++)
+        {
+            vo = new ItemVo();
+            equip = equips[i];
+            vo._ID = equip._ID;
+            vo._name = equip._Name;
+            vo._sprite = AssetManager.getInstance().getSpriteFromAtlas(equip._Icon);
+            vo._value = 0;
             voArr.push(vo);
         }
-        this.getViewComponent().showEquipsInfo(voArr);
+        this.getViewComponent().showEquipsInfo(voArr,this.currRole);
+        this.sendNotification(RoleInfoEvent.SHOW_EQUIP,[voArr,this.currRole]);
     }
 
     /**
      * 点击装备
      * @param e 
      */
-    clickEquipHandle(e:cc.Event.EventCustom)
+    clickEquipHandle(e: cc.Event.EventCustom)
     {
-        let _id:number=Number(e.getUserData());
-        let equip: EquipDataBase = DataManager.getInstance().EquipTableMap.get(_id);
+        let _id: number = Number(e.getUserData());
+        let equip: EquipDataBase = this.dataManager.EquipTableMap.get(_id);
 
-        if(this.getViewComponent().equipName.string==equip._Name)
+        if (this.getViewComponent().equipName.string == equip._Name)
         {
-            this.getViewComponent().equipDetailView.active=true;
-            if(this.currRole.HasEquip)
+            this.getViewComponent().equipDetailView.active = true;
+            if (this.currRole.HasEquip)
             {
-                if(this.currRole._Equip._ID!=equip._ID) this.getViewComponent().comparenEquipDetail(this.currRole._Equip,equip);
-                else this.getViewComponent().setEquipDetail(equip,true);
+                if (this.currRole._Equip._ID != equip._ID) this.getViewComponent().comparenEquipDetail(this.currRole._Equip, equip);
+                else this.getViewComponent().setEquipDetail(equip, true);
             }
             else
             {
                 this.getViewComponent().setEquipDetail(equip);
             }
-            
-            return ;
+
+            return;
         }
 
-        this.getViewComponent().equipName.string=equip._Name;
+        this.getViewComponent().equipName.string = equip._Name;
     }
 
     /**
      * 上装备
      * @param e 
      */
-    reloadRequip(e:cc.Event.EventCustom)
+    reloadRequip(e: cc.Event.EventCustom)
     {
-        let equip:EquipDataBase=e.getUserData();
-        let _icon:cc.SpriteFrame=AssetManager.getInstance().getSpriteFromAtlas(equip._Icon);
+        let equip: EquipDataBase = e.getUserData();
+        let _icon: cc.SpriteFrame = AssetManager.getInstance().getSpriteFromAtlas(equip._Icon);
         this.getViewComponent().uploadEquipIcon(_icon);
         this.currRole.addEquip(equip);
-        this.SetInfo(this.currRole._ID);
-        DataManager.getInstance().changeRoleAttr(this.currRole._ID,this.currRole);
+        this.showRoleDetailInfo(this.currRole._ID);
+        this.dataManager.changeRoleAttr(this.currRole._ID, this.currRole);
     }
 
     /**
      * 替换装备
      * @param e 
      */
-    replaceEquip(e:cc.Event.EventCustom)
+    replaceEquip(e: cc.Event.EventCustom)
     {
-        let equip:EquipDataBase=e.getUserData();
+        let equip: EquipDataBase = e.getUserData();
         console.dir(equip);
         this.currRole.replaceEquip(equip);
-        this.getViewComponent().equipDetailView.active=false;
+        this.getViewComponent().equipDetailView.active = false;
         this.getViewComponent().uploadEquipIcon(AssetManager.getInstance().getSpriteFromAtlas(equip._Icon));
-        this.SetInfo(this.currRole._ID);
-        DataManager.getInstance().changeRoleAttr(this.currRole._ID,this.currRole);
+        this.showRoleDetailInfo(this.currRole._ID);
+        this.dataManager.changeRoleAttr(this.currRole._ID, this.currRole);
     }
 
     /**
      * 卸下装备 
      * @param e 
      */
-    unloadEquip(e:cc.Event.EventCustom)
+    unloadEquip(e: cc.Event.EventCustom)
     {
         this.currRole.removeEquip();
         this.getViewComponent().hideEquipIcon();
-        this.getViewComponent().equipDetailView.active=false;
-        this.SetInfo(this.currRole._ID);
-        DataManager.getInstance().changeRoleAttr(this.currRole._ID,this.currRole);
+        this.getViewComponent().equipDetailView.active = false;
+        this.showRoleDetailInfo(this.currRole._ID);
+        this.dataManager.changeRoleAttr(this.currRole._ID, this.currRole);
     }
 
     //#region 筛选功能
@@ -384,15 +429,17 @@ export class RolePanelMediator extends Mediator {
      * 过滤操作
      * @param attrEnum 
      */
-    filterHandle(attrEnum: AttributeEnum) {
+    filterHandle(attrEnum: AttributeEnum)
+    {
         let roleList: Array<PresonDataBase> = this.proxyData.roleList;
         let newList: Array<PresonDataBase> = new Array();
         let valArr = null;
-        let _icon=null;
-        if(attrEnum==null) _icon = this.proxyData.getSpriteFromAtlas(AttributeEnum.Power);
+        let _icon = null;
+        if (attrEnum == null) _icon = this.proxyData.getSpriteFromAtlas(AttributeEnum.Power);
         else _icon = this.proxyData.getSpriteFromAtlas(attrEnum);
         let propertyStr = '';
-        switch (attrEnum) {
+        switch (attrEnum)
+        {
             case AttributeEnum.Power:
                 propertyStr = '_Power';
                 break;
@@ -423,27 +470,33 @@ export class RolePanelMediator extends Mediator {
                 break;
         }
         this.getViewComponent().currProperty = propertyStr;
-        if(propertyStr!="_ID") newList = roleList.sort(ArrayTool.compare(propertyStr));
+        if (propertyStr != "_ID") newList = roleList.sort(ArrayTool.compare(propertyStr));
         else newList = roleList.sort(ArrayTool.compare(propertyStr));
         valArr = newList.map(ArrayTool.map(propertyStr));
         this.sortNode(newList, valArr, _icon);
-        if (attrEnum == null) {
-            this.roleItemList.map(function (item, index, base) {
+        if (attrEnum == null)
+        {
+            this.roleItemList.map(function (item, index, base)
+            {
                 item.attrNode.active = false;
             });
         }
     }
 
-    sortNode(arr: any, val: any, icon: cc.SpriteFrame) {
-        for (let i = arr.length - 1; i >= 0; i--) {
+    sortNode(arr: any, val: any, icon: cc.SpriteFrame)
+    {
+        for (let i = arr.length - 1; i >= 0; i--)
+        {
             let item: RoleItemView = this.roleItemList.filter(o => o.ID == arr[i]._ID)[0];
             item.node.setSiblingIndex(0);
             item.showFilterInfo(icon, val[i]);
         }
     }
 
-    compare(property) {
-        return function (a, b) {
+    compare(property)
+    {
+        return function (a, b)
+        {
             var value1 = a[property];
             var value2 = b[property];
             return value2 - value1;
@@ -457,23 +510,26 @@ export class RolePanelMediator extends Mediator {
     /**
      * 初始化
      */
-    init() {
+    init()
+    {
 
     }
 
     /**
      * 
      */
-    onRegister(): void {
+    onRegister(): void
+    {
         super.onRegister();
     }
 
     /**
      * 
      */
-    onRemove(): void {
+    onRemove(): void
+    {
         this.proxyData.roleList.sort(ArrayTool.compare('_ID', false));
-        this.sendNotification(GameCommand.PANEL_CLOSE,UIPanelEnum.RolePanel);
+        this.sendNotification(GameCommand.PANEL_CLOSE, UIPanelEnum.RolePanel);
         super.onRemove();
         Log.Info('remove mediator..');
         //Facade.getInstance().removeMediator(RolePanelMediator.name);
@@ -485,14 +541,16 @@ export class RolePanelMediator extends Mediator {
      * @param body 
      * @param type 
      */
-    sendNotification(name: string, body?: any, type?: string): void {
+    sendNotification(name: string, body?: any, type?: string): void
+    {
         super.sendNotification(name, body, type);
     }
 
     /**
      * 得到视图组件
      */
-    getViewComponent(): RolePanel {
+    getViewComponent(): RolePanel
+    {
         return this.viewComponent;
     }
 

@@ -20,7 +20,7 @@ export class CarTable implements ITable
             let obj = objArr[i];
             car = new CarDataBase();
             car._ID = Number(obj['ID']);
-            car._Name = obj['车名称'];
+            car._Name = obj['名称'];
             car._Type = Number(obj['类型']);
             car._Skill = Number(obj['技能']);
             car._Value = Number(obj['值']);

@@ -11,6 +11,9 @@ import { DataManager } from "../../Managers/DataManager";
 import PresonDataBase from "../../Common/VO/PresonDataBase";
 import { MathTool } from "../../Tools/MathTool";
 import OnHook from "../../Common/VO/OnHook";
+import { HttpRequest } from "../../NetWork/HttpRequest";
+import { RequestType } from "../../NetWork/NetDefine";
+import { NetMissionInfo } from "../../NetWork/NetMessage/NetMissionInfo";
 
 
 /**
@@ -64,8 +67,18 @@ export class ServerSimulator
     {
         this.menuDatas = DataManager.getInstance().TableMenuMap;
         this.roleDatas = DataManager.getInstance().baseRoleMap;
+        /* let self=this;
+        HttpRequest.getInstance().requestPost(RequestType.task_info,function(_data:NetMissionInfo){
+            self.currMission=DataManager.getInstance().MissionMap.get(Number(_data.mainTaskId));
+            self.load_server_simulator();
+            MissionManager.getInstance().initMission();
+            MissionManager.getInstance().checkMissionState();
+        }); */
+       
         this.currMission = this.getServerCurrMission();
         this.load_server_simulator();
+        MissionManager.getInstance().initMission();
+        MissionManager.getInstance().checkMissionState();
     }
 
     getMission(): Mission
@@ -111,12 +124,13 @@ export class ServerSimulator
                     if (menuVal < this.currMission._CompleteVal)
                     {
                         this.currMission._CurrProgress = menuVal;
-                        console.log('-------任务未达成。。。。。。。。。。');
+                        this.LeadObjects = this.menus;
+                        console.log('-------任务未达成。。。。。。。。。。',menuVal);
                         menuVal = 0;
                         if (!this.isFilterObject) return;
                     }
                 }
-                this.LeadObjects = this.menus;
+               // this.LeadObjects = this.menus;
                 break;
             case MissionType.EXPOLRE:
 
@@ -838,6 +852,11 @@ export class ServerSimulator
 
     }
 
+    /**将关卡设置为探索状态 */
+    upLevelInfo(id:number,roleID:Array<number>){
+
+    }
+
     /**
      * 上传访客ID
      * @param visitorID 访客ID
@@ -897,6 +916,7 @@ export class ServerSimulator
         this.setData(key, num);
         this.updateMissionData();
         MissionManager.getInstance().checkMission(this.filterVal);
+        
     }
 
     /**
@@ -989,8 +1009,8 @@ export class ServerSimulator
         }
         else
         {
-            GameStorage.setItemJson(ServerSimulator.MISSION_DATA, DataManager.getInstance().MissionMap.get(10020));
-            let _mission: Mission = DataManager.getInstance().MissionMap.get(10020);
+            GameStorage.setItemJson(ServerSimulator.MISSION_DATA, DataManager.getInstance().MissionMap.get(10001));
+            let _mission: Mission = DataManager.getInstance().MissionMap.get(10001);
             return _mission;
         }
     }

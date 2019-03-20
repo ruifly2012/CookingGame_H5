@@ -1,4 +1,3 @@
-import { Log } from "../../../build/web-mobile/src/project.dev";
 
 
 export class MathTool 

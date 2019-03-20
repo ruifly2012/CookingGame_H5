@@ -1,5 +1,5 @@
-base,http://192.168.1.227:8080/
-login_url,http://192.168.1.227:8080/login
-register_url,http://192.168.1.227:8080/login/register
+base,http://192.168.1.110:8080/
+login_url,/login
+register_url,/login/register
 prefix,MARTIAN-FOOD
 socket_ip,ws://192.168.1.227:8088/ws

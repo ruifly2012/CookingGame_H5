@@ -36,7 +36,7 @@ export class Queue<T>
      */
     public pop(): T 
     {
-        return this.elements.pop();    
+        return this.elements.pop();
     }
 
     public size():number

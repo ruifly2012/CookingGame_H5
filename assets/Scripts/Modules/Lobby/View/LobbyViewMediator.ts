@@ -20,6 +20,8 @@ import { MissionManager } from "../../Missions/MissionManager";
 import { MissionEvent } from "../../../Events/MissionEvent";
 import { CookingStateProtocol, CookingNetwork } from "../../Cooking/Model/CookingNetwork";
 import { CookingStatus } from "../../Cooking/Model/CookingProxy";
+import { HttpRequest } from "../../../NetWork/HttpRequest";
+import { RequestType } from "../../../NetWork/NetDefine";
 
 
 export class LobbyViewMediator extends Mediator
@@ -41,10 +43,6 @@ export class LobbyViewMediator extends Mediator
             GameCommand.UPDATE_CURRENCY,
             GameCommand.MISSION_STATE_UPDATE,
             GameCommand.UPDATE_COOKING_STATE,
-            //MissionEvent.MISSION_COMPLETE,
-            /* CookingEvent.COOKING_IDLE,
-            CookingEvent.COOKING_START,
-            CookingEvent.COOKING_END */
         ];
     }
 
@@ -54,6 +52,8 @@ export class LobbyViewMediator extends Mediator
         {
             case GameCommand.PANEL_CLOSE:
                 console.log('关闭窗口通知。。。。。。。。。。。。。。', notification.getBody());
+                //HttpRequest.getInstance().requestPost(RequestType.currency_info,null);
+                UIManager.getInstance().closeUIPanel(notification.getBody());
                 ResourceManager.getInstance().unLoadRes('prefabs/ui_panel/' + notification.getBody());
                 break;
             case GameCommand.UPDATE_CURRENCY:
@@ -67,27 +67,6 @@ export class LobbyViewMediator extends Mediator
                 break;
             default:
                 break;
-            /* case CookingEvent.COOKING_START:
-                this.getViewComponent().timeTxt.node.active = true;
-                this.getViewComponent().timeTxt.string = notification.getBody();
-                let self = this;
-                this.cookingInterval = setInterval(() => {
-                    let time: number = GameManager.TimeEvent(CookingEvent.COOKING_ID);
-                    self.getViewComponent().timeTxt.string = GameManager.GetTimeLeft2BySecond(time);
-                    if (time <= 0) {
-                        self.getViewComponent().timeTxt.string = '已完成';
-                        clearInterval(self.cookingInterval);
-                    }
-                }, 1000);
-                break;
-            case CookingEvent.COOKING_END:
-                clearInterval(this.cookingInterval);
-                this.getViewComponent().timeTxt.node.active = true;
-                this.getViewComponent().timeTxt.string = '已完成';
-                break;
-            case CookingEvent.COOKING_IDLE:
-                this.getViewComponent().timeTxt.node.active = false;
-                break; */
 
         }
 
@@ -155,33 +134,29 @@ export class LobbyViewMediator extends Mediator
         this.getViewComponent().setMissionRed(currMission._Location);
     }
 
-    isOpen:boolean=false;
+    isOpen: boolean = false;
     MenuBtnHandle(arg: cc.Event.EventCustom): any
     {
         Log.Info(LobbyViewMediator.name, ' menu btn data: ', arg.getUserData());
-        if(this.isOpen) return ;
-        this.isOpen=true;
+        if (this.isOpen) return;
+        this.isOpen = true;
         switch (arg.getUserData())
         {
             case 'cookingBtn':
                 UIManager.getInstance().openUIPanel(UIPanelEnum.CookingPanel, this.LoadUIComplete.bind(this));
-                //this.sendNotification(GameCommand.COOKING_INIT, UIPanelEnum.CookingPanel);
                 break;
             case 'battleBtn':
                 UIManager.getInstance().openUIPanel(UIPanelEnum.SelectPanel, this.LoadUIComplete.bind(this));
-                //this.sendNotification(GameCommand.LOBBY_COMMAND, UIPanelEnum.BattlePanel);
                 break;
             case 'roleBtn':
+                HttpRequest.getInstance().requestPost(RequestType.character_info, null);
                 UIManager.getInstance().openUIPanel(UIPanelEnum.RolePanel, this.LoadUIComplete.bind(this));
-                //this.sendNotification(GameCommand.ROLE_INIT, UIPanelEnum.RolePanel);
                 break;
             case 'bagBtn':
                 UIManager.getInstance().openUIPanel(UIPanelEnum.WarehousePanel, this.LoadUIComplete.bind(this));
-                //this.sendNotification(GameCommand.LOBBY_COMMAND, UIPanelEnum.BagPanel);
                 break;
             case 'missionBtn':
                 UIManager.getInstance().openUIPanel(UIPanelEnum.MissionPanel, this.LoadUIComplete.bind(this));
-                //this.sendNotification(GameCommand.LOBBY_COMMAND, UIPanelEnum.BagPanel);
                 break;
             case 'OnHookBtn':
                 UIManager.getInstance().openUIPanel(UIPanelEnum.OnHookPanel, this.LoadUIComplete.bind(this));
@@ -197,7 +172,7 @@ export class LobbyViewMediator extends Mediator
 
     LoadUIComplete(uipanelEnum: UIPanelEnum): any
     {
-        this.isOpen=false;
+        this.isOpen = false;
         //this.sendNotification(uipanelEnum);
     }
 
