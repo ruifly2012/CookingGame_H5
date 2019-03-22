@@ -28,12 +28,11 @@ export class LoginMediator extends Mediator
         this.getViewComponent().startGameBtn.getComponentInChildren(cc.Label).string = '登录';
 
 
-        let info: NetAccountInfo = LoginManager.getInstance().getUserConfig();
+        /* let info: NetAccountInfo = LoginManager.getInstance().getUserConfig();
         if(info==null) return ;
         this.getViewComponent().userInput.string = info.username;
-        this.getViewComponent().passwordInput.string=info.password;
         this.getViewComponent().passwordInput.node.active = false;
-        this.getViewComponent().startGameBtn.getComponentInChildren(cc.Label).string = '开始游戏';
+        this.getViewComponent().startGameBtn.getComponentInChildren(cc.Label).string = '开始游戏'; */
     }
 
 

@@ -36,12 +36,12 @@ export default class LoginView extends cc.Component
     {
         //this.userInput.string='222';
         //this.passwordInput.string='222';
-        if (this.userInput.string == '' || this.passwordInput.string == '')
+        /* if (this.userInput.string == '' || this.passwordInput.string == '')
         {
             NotificationView.Instance.showNotify('注意','用户名或者密码为空');
             return;
-        } 
-        this.node.dispatchEvent(new LoginEvent(LoginEvent.LOGIN, true, new AccountVo(this.userInput.string, this.passwordInput.string)));
+        } */
+        this.node.dispatchEvent(new LoginEvent(LoginEvent.LOGIN, true, new AccountVo(this.userInput.placeholder, this.passwordInput.placeholder)));
   
         //LoginManager.getInstance().requestLoginAccount(new AccountVo(this.userInput.string,this.passwordInput.string));
     }

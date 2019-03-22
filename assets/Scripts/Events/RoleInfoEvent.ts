@@ -21,7 +21,7 @@ export class RoleInfoEvent extends cc.Event.EventCustom
     public static ADVANCE_UP:string='advance_up';
     /*** 发送满阶级满等级事件 */
     public static FULL_LEVEL_ADVANCE='full_level_advance';
-    /** 点击equip Item按钮事件 点击装备 */
+    /** 点击装备 */
     public static CLICK_EQUIP:string='click_equip'
     /** 添加装备 */
     public static RELOAD_EQUIP:string='reload_equip';

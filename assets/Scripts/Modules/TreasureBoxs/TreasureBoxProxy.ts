@@ -4,11 +4,6 @@ import GlobalVarBase from "../../Common/VO/GlobalVarBase";
 import { CurrencyManager } from "../../Managers/ CurrencyManager";
 import { GameStorage } from "../../Tools/GameStorage";
 import { ArrayTool } from "../../Tools/ArrayTool";
-import { DataManager } from "../../Managers/DataManager";
-import { HttpRequest } from "../../NetWork/HttpRequest";
-import { RequestType } from "../../NetWork/NetDefine";
-import { TreasureBoxManager } from "./TreasureBoxManager";
-import { TreasureEvent } from "../../Events/TreasureEvent";
 
 /**
  * 
@@ -25,33 +20,24 @@ export class TreasureBoxProxy extends Proxy
     rollMap: Map<number, any> = new Map();
 
     /**
-     * 
+     * 根据奖池类型来分类奖品
+     * @param data 
      */
-    public constructor()
+    setData(data: Map<number, TreasureVo>): void
     {
-        super(TreasureBoxProxy.name);
-    }
-
-    InitData()
-    {
-        /* if (this.getLocalSave(_vo._ID) == 1) 
-            {
-                _vo.isOwn = true;
-                if (_vo.OnlyKey) _vo.isFilter = true;
-            } */
-        /* let contentList1: Array<TreasureVo> = new Array();
+        let contentList1: Array<TreasureVo> = new Array();
         let contentList2: Array<TreasureVo> = new Array();
         data.forEach((_vo, _id) =>
         {
-            
-            if(propList.find(o=>o==_vo._ID)!=undefined)
+            if (this.getLocalSave(_vo._ID) == 1) 
             {
-                _vo.isOwn=true;
-                if(_vo.OnlyKey) _vo.isFilter=true;
+                _vo.isOwn = true;
+                if (_vo.OnlyKey) _vo.isFilter = true;
             }
             switch (_vo._Type)
             {
                 case 1:
+
                     contentList1.push(_vo);
                     break;
                 case 2:
@@ -66,61 +52,18 @@ export class TreasureBoxProxy extends Proxy
         contentList2=contentList2.sort(ArrayTool.compare('_ID'));
         this.TotalAwardMap.set(1, contentList1);
         this.TotalAwardMap.set(2, contentList2);
-        this.rollMap = this.TotalAwardMap; */
-        let map:Map<number,number[]>=new Map();
-        let self=this;
-        for (let i = 1; i <=2; i++) {
-            HttpRequest.getInstance().requestPost(RequestType.treasure_info,function(propList:number[]){
-                console.log(i,propList);
-                self.setAwardMap(i,propList);
-            },'{"type":'+i+'}');
-        }
-    }
-
-    requestCount:number=0
-    setAwardMap(type: number, propList: number[])
-    {
-        let contentList: Array<TreasureVo> = new Array();
-        DataManager.getInstance().TreasureMap.forEach((_vo, _id) =>
-        {
-            if (propList.find(o => o == _vo._ID) != undefined)
-            {
-                _vo.isOwn = true;
-                if (_vo.OnlyKey) _vo.isFilter = true;
-            }
-            if (_vo._Type) contentList.push(_vo);
-        });
-        contentList = contentList.sort(ArrayTool.compare('_ID'));
-        this.TotalAwardMap.set(type, contentList);
-        this.rollMap.set(type, contentList);
-        this.requestCount++;
-        if(this.requestCount==2)
-        {
-            this.setGlobalData();
-            TreasureBoxManager.getInstance().init();
-            this.sendNotification(TreasureEvent.DATA_INIT_COMPLETE);
-        }
-    }
-
-    /**
-     * 根据奖池类型来分类奖品
-     * @param data 
-     */
-    setData(data: Map<number, TreasureVo>): void
-    {
-
+        this.rollMap = this.TotalAwardMap;
     }
 
     /**
      * 7为消耗金币，8为消耗钻石
      * @param data 全局变量中奖池消耗的货币类型数据
      */
-    setGlobalData()
+    setGlobalData(data: Map<number, GlobalVarBase>)
     {
-
-        let arr: string[] =DataManager.getInstance().GlobaVar.get(7)._Value.split(',');
+        let arr: string[] = data.get(7)._Value.split(',');
         this.globalValMap.set(1, arr);
-        arr = DataManager.getInstance().GlobaVar.get(8)._Value.split(',');
+        arr = data.get(8)._Value.split(',');
         this.globalValMap.set(2, arr);
     }
 
@@ -195,5 +138,11 @@ export class TreasureBoxProxy extends Proxy
 
     }
 
-
+    /**
+     * 
+     */
+    public constructor()
+    {
+        super(TreasureBoxProxy.name);
+    }
 }

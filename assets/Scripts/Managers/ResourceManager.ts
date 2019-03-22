@@ -32,7 +32,7 @@ export class ResourceManager{
         
         cc.loader.loadRes(_url,_type,loadingProgress,(err,obj)=>{
             if(err){
-                console.error("!!! load _url:"+_url+" ......."+err);
+                console.error("!!! load _url:"+_url+" error.......");
             }
             else{
                 Log.Info('load '+_url+' res complete...'+obj);

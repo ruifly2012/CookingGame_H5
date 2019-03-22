@@ -1,4 +1,4 @@
-
+import { C2SType } from "../NetDefine";
 
 /**
  * 
@@ -37,9 +37,9 @@ export class NetHead implements NetObject
         
     }
     
-    public status:number=0;
+    public status:string='';
     public msg:string='';
-    public ok:boolean=false;
+    public ok:string='';
     public data:any=null;
 
     toData()

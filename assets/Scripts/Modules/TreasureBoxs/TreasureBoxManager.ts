@@ -4,33 +4,7 @@ import { Facade } from "../../MVC/Patterns/Facade/Facade";
 import { PropVo } from "../../Common/VO/PropVo";
 import { DataManager } from "../../Managers/DataManager";
 import { AssetManager } from "../../Managers/AssetManager";
-import { HttpRequest } from "../../NetWork/HttpRequest";
-import { RequestType } from "../../NetWork/NetDefine";
-import { DrawParam } from "../../NetWork/NetMessage/NetTreasureInfo";
 
-/**
- * 奖池类型
- */
-export enum TreasureType
-{
-    /** 金币池 */
-    Coin=1,
-    /** 钻石池 */
-    Diamonds=2
-}
-
-/**
- * 宝箱接口
- */
-export class TreausreBoxType
-{
-    /** 奖池类型 */
-    treaureType:TreasureType;
-    /** 单抽 */
-    singleDraw:number=0;
-    /** 多抽 */
-    MultiDraw:number=0;
-}
 
 /**
  * 宝箱抽奖管理（逻辑判断）
@@ -153,32 +127,15 @@ export class TreasureBoxManager
      * 
      * @param rollNum 抽奖次数
      */
-    startRoll(rollNum: number,_callback:any)
+    startRoll(rollNum: number): Array<TreasureVo>
     {
-        //HttpRequest.getInstance(RequestType.draw_treasure)
-        let param:DrawParam=new DrawParam();
-        if(rollNum==1) param.type=2;
-        else param.type=1;
-        param.drawType=this.currBoxType;
-        
-        let list:Array<TreasureVo>=new Array();
-        let prop:TreasureVo=null;
-        let self=this;
-        HttpRequest.getInstance().requestPost(RequestType.draw_treasure,function(porpList:number[]){
-            
-            for (let i = 0; i < porpList.length; i++) {
-                prop=self.currBoxList.find(o=>o._PropID==porpList[i]);
-                list.push(prop);
-            }
-            _callback(list);
-        },JSON.stringify(param));
-        
-        /* this.awardProp = new Array();
+        this.awardProp = new Array();
         for (let i = 0; i < rollNum; i++)
         {
             this.awardProp.push(this.roll());
         }
-        return this.awardProp; */
+
+        return this.awardProp;
     }
 
     /**

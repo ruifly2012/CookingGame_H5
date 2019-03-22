@@ -1,4 +1,4 @@
-import { RequestType, NetDefine, VerificationResult } from "./NetDefine";
+import { RequestType, NetDefine } from "./NetDefine";
 import { NetHead } from "./NetMessage/NetHead";
 import { GameStorage } from "../Tools/GameStorage";
 import { CurrencyInfo } from "./NetMessage/NetCurrencyInfo";
@@ -11,10 +11,6 @@ import { CookingProxy } from "../Modules/Cooking/Model/CookingProxy";
 import { CurrencyManager } from "../Managers/ CurrencyManager";
 import { GameCommand } from "../Events/GameCommand";
 import { DataManager } from "../Managers/DataManager";
-import { NetExplorePanel, NetExploreData } from "./NetMessage/NetExploreInfo";
-import { NetOnHookPanel, NetOnHookPanelInfo, NetCarinfo, Carinfo } from "./NetMessage/NetOnHookInfo";
-import { NetDrawOutInfo } from "./NetMessage/NetTreasureInfo";
-import { NetMissionInfo, NetMissionReward } from "./NetMessage/NetMissionInfo";
 
 
 export interface IMessage
@@ -37,319 +33,131 @@ export class MessageHandle implements IMessage
         switch (_header)
         {
             case RequestType.login:
-                this.loginHandle(_netHead, _callback);
+                if (_netHead.data.token != null)
+                {
+                    GameStorage.setItem(NetDefine.TOKEN, _netHead.data.token);
+                }
+                _callback(_netHead);
+                //this.loginHandle(_data);
                 break;
             case RequestType.register:
-                this.registerHandle(_netHead, _callback);
+                if (_netHead.data.token != null)
+                {
+                    GameStorage.setItem(NetDefine.TOKEN, _netHead.data.token);
+                }
+                console.dir(_netHead);
+                _callback(_netHead);
+                //this.registerHandle(_data);
                 break;
             case RequestType.currency_info:
-                this.currencyInfoHandle(_netHead, _callback);
+                let info: CurrencyInfo = new CurrencyInfo();
+                info = Object.assign(new CurrencyInfo(), _netHead.data);
+                this.updateCurrency(info);
                 break;
             case RequestType.player_info:
                 break;
             case RequestType.character_info:   //用户信息
-                this.characterInfoHandle(_netHead, _callback);
+                for (let i = 0; i < _netHead.data.length; i++)
+                {
+                    arr.push(Object.assign(new NetRoleInfo(), _netHead.data[i]));
+                }
+                if (_callback != null) _callback(arr);
+                this.updateRole(arr);
                 break;
             case RequestType.character_uplevel:
-                this.characterUplevelHandle(_netHead, _callback);
+                let notifyRoleUpgrade: NotifyRoleUpgrade = new NotifyRoleUpgrade();
+                notifyRoleUpgrade = Object.assign(new NotifyRoleUpgrade(), _netHead.data);
+                notifyRoleUpgrade.character = Object.assign(new NetRoleInfo(), _netHead.data.character);
+                (<RoleProxy>Facade.getInstance().retrieveProxy(RoleProxy.name)).netInit([notifyRoleUpgrade.character]);
                 break;
             case RequestType.character_upadvance_level:
-                this.characterUpadvanceLevelHandle(_netHead, _callback);
+                let roleAdvanceLevel: NotifyRoleAdvanceLevel = new NotifyRoleAdvanceLevel();
+                roleAdvanceLevel = Object.assign(new NotifyRoleAdvanceLevel(), _netHead.data);
+                roleAdvanceLevel.character = Object.assign(new NetRoleInfo(), roleAdvanceLevel.character);
+                for (let i = 0; i < roleAdvanceLevel.props.length; i++)
+                {
+                    roleAdvanceLevel.props.push(Object.assign(new NetProps(), roleAdvanceLevel.props));
+                }
+                this.updateNetProps(arr);
+                (<RoleProxy>Facade.getInstance().retrieveProxy(RoleProxy.name)).netInit([roleAdvanceLevel.character]);
                 break;
             case RequestType.character_addcharacter:
-                this.AddCharacterHandle(_netHead, _callback);
+
                 break;
             case RequestType.props_info:
-                this.propInfoHandle(_netHead, _callback);
+                for (let i = 0; i < _netHead.data.length; i++)
+                {
+                    arr.push(Object.assign(new NetProps(), _netHead.data[i]));
+                }
+                if (_callback != null) _callback(arr);
+                this.updateNetProps(arr);
                 break
-            case RequestType.cook_start:
-                this.cookStartHandle(_netHead, _callback);
-                break;
             case RequestType.cook_info:
-                this.cookInfoHandle(_netHead, _callback);
-                break;
-            case RequestType.cook_quicken:
-                this.cookQuickenHandle(_netHead, _callback);
+                if (_netHead.data == null) return;
+                let cookingNotify: NetMakeCookingNotify = new NetMakeCookingNotify();
+                cookingNotify.id = _netHead.data.id;
+                cookingNotify.consume = _netHead.data.consume;
+                cookingNotify.progress = _netHead.data.progress;
+                cookingNotify.goldCoinIncome = _netHead.data.goldCoinIncome;
+                cookingNotify.startTime = _netHead.data.startTime;
+                cookingNotify.remainTime = _netHead.data.remainTime;
+                _netHead.data.data = eval(_netHead.data.data);
+                for (let i = 0; i < _netHead.data.data.length; i++)
+                {
+                    const element = _netHead.data.data[i];
+                    cookingNotify.data.push(Object.assign(new NetMakeCookingInfo(), element));
+                }
+                if (_callback != null) _callback(cookingNotify);
+                this.updateCookingData(cookingNotify);
                 break;
             case RequestType.cook_reward:
-                this.cookReward(_netHead, _callback);
+                if (_netHead.data == null) return;
+                let cookingReward: CookingRewardNotify = new CookingRewardNotify();
+                cookingReward.visitorsReward = _netHead.data.visitorsReward;
+                cookingReward.playerGold = _netHead.data.playerGold;
+                cookingReward.rewardGold = _netHead.data.rewardGold;
+                if (_callback != null) _callback(cookingReward);
                 break;
-            case RequestType.player_level_list:
-                this.NetExploreHandle(_netHead, _callback);
-                break;
-            case RequestType.onhook_infos:
-                this.OnHookInfos(_netHead, _callback);
-                break;
-            case RequestType.onhook_carinfos:
-                this.OnHookCarList(_netHead, _callback);
-                break;
-            case RequestType.treasure_info:
-                this.treasureInfoHandle(_netHead, _callback);
-                break;
-            case RequestType.draw_treasure:
-                this.drawTreasure(_netHead, _callback);
-                break;
-            case RequestType.task_info:
-                if (_netHead.status != 200) return;
-                this.taskInfoHandle(_netHead,_callback);
-                break;
-            case RequestType.task_reward:
-                if (_netHead.status != 200) return;
-                this.taskRewardHandle(_netHead,_callback);
-                break;
+
             default:
                 if (_callback != null) _callback(_netHead.data);
                 break;
         }
     }
 
-    /**挂机面板车信息 */
-    OnHookCarList(_netHead: NetHead, _callback: any)
+    updateCurrency(_info: CurrencyInfo)
     {
-        if (_netHead.data == null) return;
-        let ok: NetCarinfo = new NetCarinfo();
-        for (let i = 0; i < _netHead.data.length; i++)
-        {
-            ok.carList.push(Object.assign(new Carinfo(), _netHead.data[i]));
-        }
-        if (_callback != null) _callback(ok);
-    }
-
-    /**挂机面板信息*/
-    OnHookInfos(_netHead: NetHead, _callback: any)
-    {
-        if (_netHead.data == null) return;
-        let ok: NetOnHookPanel = new NetOnHookPanel();
-        for (let i = 0; i < _netHead.data.length; i++)
-        {
-            ok.OnHookPanelInfoArray.push(Object.assign(new NetOnHookPanelInfo(), _netHead.data[i]));
-        }
-        if (_callback != null) _callback(ok);
-    }
-
-    /**冒险面板信息 */
-    NetExploreHandle(_netHead: NetHead, _callback: any)
-    {
-        if (_netHead.data == null) return;
-        let explorepanel: NetExplorePanel = new NetExplorePanel();
-        for (let i = 0; i < _netHead.data.length; i++)
-        {
-            explorepanel.data.push(Object.assign(new NetExploreData(), _netHead.data[i]));
-        }
-        if (_callback != null) _callback(explorepanel);
-    }
-
-    /**
-     * 登录
-     */
-    loginHandle(_netHead: NetHead, _callback: any)
-    {
-        if (_netHead.data.token != null)
-        {
-            GameStorage.setItem(NetDefine.TOKEN, _netHead.data.token);
-        }
-        _callback(_netHead);
-    }
-
-    /** 注册 */
-    registerHandle(_netHead: NetHead, _callback: any)
-    {
-        if (_netHead.data.token != null)
-        {
-            GameStorage.setItem(NetDefine.TOKEN, _netHead.data.token);
-        }
-        _callback(_netHead.ok, _netHead.msg);
-    }
-
-    playerInfoHandle(_netHead: NetHead, _callback: any)
-    {
-
-    }
-
-    /** 金币/钻石 更新 */
-    currencyInfoHandle(_netHead: NetHead, _callback: any)
-    {
-        let info: CurrencyInfo = new CurrencyInfo();
-        info = Object.assign(new CurrencyInfo(), _netHead.data);
-        CurrencyManager.getInstance().Coin = info.goldCoin;
-        CurrencyManager.getInstance().Money = info.diamonds;
+        CurrencyManager.getInstance().Coin = _info.goldCoin;
+        CurrencyManager.getInstance().Money = _info.diamonds;
         Facade.getInstance().sendNotification(GameCommand.UPDATE_CURRENCY);
     }
 
-    /** 人物更新 */
-    characterInfoHandle(_netHead: NetHead, _callback: any)
+    updateRole(_info: NetRoleInfo[])
     {
-        let roleList: any = [];
-        for (let i = 0; i < _netHead.data.length; i++)
-        {
-            roleList.push(Object.assign(new NetRoleInfo(), _netHead.data[i]));
-        }
-        if (_callback != null) _callback(roleList);
         let proxy: RoleProxy = <RoleProxy>Facade.getInstance().retrieveProxy(RoleProxy.name);
-        proxy.initRole(roleList);
+        proxy.netInit(_info);
     }
 
-    /** 人物升级 */
-    characterUplevelHandle(_netHead: NetHead, _callback: any)
+    updateNetProps(_info: NetProps[])
     {
-        let notifyRoleUpgrade: NotifyRoleUpgrade = new NotifyRoleUpgrade();
-        notifyRoleUpgrade = Object.assign(new NotifyRoleUpgrade(), _netHead.data);
-        notifyRoleUpgrade.character = Object.assign(new NetRoleInfo(), _netHead.data.character);
-        (<RoleProxy>Facade.getInstance().retrieveProxy(RoleProxy.name)).updateRole(notifyRoleUpgrade.character);
-    }
-
-    /** 人物升阶 */
-    characterUpadvanceLevelHandle(_netHead: NetHead, _callback: any)
-    {
-        let roleAdvanceLevel: NotifyRoleAdvanceLevel = new NotifyRoleAdvanceLevel();
-        roleAdvanceLevel.gold = _netHead.data.gold;
-        roleAdvanceLevel.character = Object.assign(new NetRoleInfo(), _netHead.data.character);
-        roleAdvanceLevel.props = [];
-        for (let i = 0; i < _netHead.data.props.length; i++)
+        for (let i = 0; i < _info.length; i++)
         {
-            roleAdvanceLevel.props.push(Object.assign(new NetProps(), _netHead.data.props[i]));
-        }
-        this.updateNetProps(roleAdvanceLevel.props);
-        (<RoleProxy>Facade.getInstance().retrieveProxy(RoleProxy.name)).updateRole(roleAdvanceLevel.character);
-    }
-
-    /** 增加人物 */
-    AddCharacterHandle(_netHead: NetHead, _callback: any)
-    {
-        if (_netHead.msg == 'OK')
-        {
-            (<RoleProxy>Facade.getInstance().retrieveProxy(RoleProxy.name)).addRole(Number(_netHead.data.character.characterId));
-        }
-        else
-        {
-
-        }
-    }
-
-    /** 道具更新 */
-    propInfoHandle(_netHead: NetHead, _callback: any)
-    {
-        let propList: any = [];
-        for (let i = 0; i < _netHead.data.length; i++)
-        {
-            propList.push(Object.assign(new NetProps(), _netHead.data[i]));
-        }
-        if (_callback != null) _callback(propList);
-        this.updateNetProps(propList);
-    }
-
-    /**  */
-    updateNetProps(propList: NetProps[])
-    {
-        for (let i = 0; i < propList.length; i++)
-        {
-            const element = propList[i];
+            const element = _info[i];
             this.dataManager.basePropVoMap.set(element.propsId, this.dataManager.PropVoMap.get(element.propsId));
             this.dataManager.basePropVoMap.get(element.propsId)._Amount = element.propsValue;
         }
         this.dataManager.updateBaseProp();
     }
 
-    /** 开始做菜，上传做菜信息 */
-    cookStartHandle(_netHead: NetHead, _callback: any)
+    updateCookingData(info: NetMakeCookingNotify)
     {
-        console.log(_netHead.status, _netHead.msg);
-        if (_netHead.status == 200)
-        {
-            if (_callback != null) _callback(VerificationResult.Success);
-        }
-        else
-        {
-            if (_callback != null) _callback(VerificationResult.Failure);
-        }
+
     }
 
-    /** 做菜信息请求 */
-    cookInfoHandle(_netHead: NetHead, _callback: any)
+    makeCookingReward(reward: CookingRewardNotify)
     {
-        if (_netHead.data == null) return;
-        let cookingNotify: NetMakeCookingNotify = new NetMakeCookingNotify();
-        cookingNotify.id = _netHead.data.id;
-        cookingNotify.consume = _netHead.data.consume;
-        cookingNotify.progress = _netHead.data.progress;
-        cookingNotify.goldCoinIncome = _netHead.data.goldCoinIncome;
-        cookingNotify.startTime = _netHead.data.startTime;
-        cookingNotify.remainTime = _netHead.data.remainTime;
-        cookingNotify.visitorReawrd = _netHead.data.visitorReawrd;
-        _netHead.data.data = eval(_netHead.data.data);
-        for (let i = 0; i < _netHead.data.data.length; i++)
-        {
-            const element = _netHead.data.data[i];
-            cookingNotify.data.push(Object.assign(new NetMakeCookingInfo(), element));
-        }
-        if (_callback != null) _callback(cookingNotify);
+        //更新领奖后的金币
+        CurrencyManager.getInstance().Coin = reward.playerGold;
     }
-
-    /** 做菜奖励 */
-    cookReward(_netHead: NetHead, _callback: any)
-    {
-        if (_netHead.data == null) return;
-        if (_netHead.msg == 'OK')
-        {
-            let cookingReward: CookingRewardNotify = new CookingRewardNotify();
-            cookingReward.visitorsReward = _netHead.data.visitorsReward;
-            cookingReward.playerGold = _netHead.data.playerGold;
-            cookingReward.rewardGold = _netHead.data.rewardGold;
-            if (_callback != null) _callback(cookingReward);
-        }
-    }
-
-    /** 做菜钻石加速 */
-    cookQuickenHandle(_netHead: NetHead, _callback: any)
-    {
-        if (_netHead.msg == 'OK')
-        {
-            if (_callback != null) _callback(VerificationResult.Success);
-            CurrencyManager.getInstance().Money = Number(_netHead.data.diamonds);
-            Facade.getInstance().sendNotification(GameCommand.UPDATE_CURRENCY);
-        }
-        else
-        {
-            if (_callback != null) _callback(VerificationResult.Failure);
-        }
-    }
-
-    treasureInfoHandle(_netHead: NetHead, _callback: any)
-    {
-        let lackItem: any = null;
-        if (_netHead.data != null)
-        {
-            lackItem = _netHead.data.notOwned;
-            if (_callback != null) _callback(lackItem);
-        }
-    }
-
-    drawTreasure(_netHead: NetHead, _callback: any)
-    {
-        let draw: NetDrawOutInfo = new NetDrawOutInfo();
-        if (_netHead.data != null)
-        {
-            draw = Object.assign(new NetDrawOutInfo(), _netHead.data);
-            CurrencyManager.getInstance().Coin = Number(draw.gold);
-            CurrencyManager.getInstance().Money = Number(draw.diamonds);
-            Facade.getInstance().sendNotification(GameCommand.UPDATE_CURRENCY);
-            if (_callback != null) _callback(draw.drawOut);
-        }
-    }
-
-    taskInfoHandle(_netHead: NetHead, _callback: any)
-    {
-        let info:NetMissionInfo=new NetMissionInfo();
-        info=Object.assign(new NetMissionInfo(),_netHead.data);
-        if(_callback!=null) _callback(info);
-    }
-
-    taskRewardHandle(_netHead: NetHead, _callback: any)
-    {
-        let info:NetMissionReward=new NetMissionReward();
-        info=Object.assign(new NetMissionReward(),_netHead.data);
-        if(_callback!=null) _callback(info);
-    }
-
 
 }

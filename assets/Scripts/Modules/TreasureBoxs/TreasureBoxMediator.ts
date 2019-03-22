@@ -9,7 +9,6 @@ import { DataManager } from "../../Managers/DataManager";
 import { TreasureVo } from "../../Common/VO/TreasureVo";
 import { CurrencyManager } from "../../Managers/ CurrencyManager";
 import { ObjectTool } from "../../Tools/ObjectTool";
-import { TreasureEvent } from "../../Events/TreasureEvent";
 
 
 /**
@@ -29,19 +28,17 @@ export class TreasureBoxMediator extends Mediator
     {
         super(TreasureBoxMediator.name, view);
         this.boxProxy = <TreasureBoxProxy>Facade.getInstance().retrieveProxy(TreasureBoxProxy.name);
-        /* this.boxProxy = <TreasureBoxProxy>Facade.getInstance().retrieveProxy(TreasureBoxProxy.name);
         this.boxProxy.setData(DataManager.getInstance().TreasureMap);
         this.boxProxy.setGlobalData(DataManager.getInstance().GlobaVar);
 
         this.manager = TreasureBoxManager.getInstance();
-        this.manager.init(); */
-        this.manager = TreasureBoxManager.getInstance();
+        this.manager.init();
 
         this.getViewComponent().clickDelegate = this.clickHandle.bind(this);
-        this.getViewComponent().showContentDelegate = this.showCollectContent.bind(this);
-        this.getViewComponent().oneLotteryDelegate = this.oneLottery.bind(this);
-        this.getViewComponent().tenLotteryDelegate = this.tenLottery.bind(this);
-        this.getViewComponent().getAwardDelegate = this.getAward.bind(this);
+        this.getViewComponent().showContentDelegate=this.showCollectContent.bind(this);
+        this.getViewComponent().oneLotteryDelegate=this.oneLottery.bind(this);
+        this.getViewComponent().tenLotteryDelegate=this.tenLottery.bind(this);
+        this.getViewComponent().getAwardDelegate=this.getAward.bind(this);
     }
 
     /**
@@ -59,7 +56,7 @@ export class TreasureBoxMediator extends Mediator
             this.manager.changeBox(true);
         }
         this.getViewComponent().setInfo(this.manager.getBoxType(), this.manager.getBoxTypeNum(), this.manager.getCoinType()
-            , this.manager.getCoinArr(), this.manager.getBoxOwn() + '/' + this.manager.getBoxAmount().toString());
+            , this.manager.getCoinArr(), this.manager.getBoxOwn()+'/' + this.manager.getBoxAmount().toString());
     }
 
     /**
@@ -76,11 +73,11 @@ export class TreasureBoxMediator extends Mediator
      */
     oneLottery()
     {
-        this.boxProxy.deductCurrency(this.manager.getBoxTypeNum(), true);
+        this.boxProxy.deductCurrency(this.manager.getBoxTypeNum(),true);
         //let _vo:TreasureVo=TreasureBoxManager.getInstance().roll();
-        // console.log(_vo._PropName,_vo._Weight);
-        TreasureBoxManager.getInstance().startRoll(1,this.showResult.bind(this));
-        //this.getViewComponent().setAwardContentInfo(vos);
+       // console.log(_vo._PropName,_vo._Weight);
+        let vos:Array<TreasureVo>=TreasureBoxManager.getInstance().startRoll(1);
+        this.getViewComponent().setAwardContentInfo(vos);
     }
 
     /**
@@ -88,21 +85,18 @@ export class TreasureBoxMediator extends Mediator
      */
     tenLottery()
     {
-        this.boxProxy.deductCurrency(this.manager.getBoxTypeNum(), false);
-        TreasureBoxManager.getInstance().startRoll(10,this.showResult.bind(this));
+        this.boxProxy.deductCurrency(this.manager.getBoxTypeNum(),false);
+        let vos:Array<TreasureVo>=TreasureBoxManager.getInstance().startRoll(10);
         //console.table(TreasureBoxManager.getInstance().currBoxList);
-        
-    }
-
-    showResult(vos: Array<TreasureVo>)
-    {
         this.getViewComponent().setAwardContentInfo(vos);
+
+      
     }
 
     getAward()
     {
         TreasureBoxManager.getInstance().saveData();
-        this.getViewComponent().collectTxt.string = this.manager.getBoxOwn() + '/' + this.manager.getBoxAmount().toString();
+        this.getViewComponent().collectTxt.string=this.manager.getBoxOwn()+'/' + this.manager.getBoxAmount().toString();
     }
 
     /**
@@ -111,8 +105,7 @@ export class TreasureBoxMediator extends Mediator
     listNotificationInterests(): string[]
     {
         return [
-            UIPanelEnum.TreasureBox,
-            TreasureEvent.DATA_INIT_COMPLETE,
+            UIPanelEnum.TreasureBox
         ];
     }
 
@@ -125,22 +118,14 @@ export class TreasureBoxMediator extends Mediator
         switch (notification.getName())
         {
             case UIPanelEnum.TreasureBox:
-
-                break;
-            case TreasureEvent.DATA_INIT_COMPLETE:
-                this.showInfo();
+                this.getViewComponent().setInfo(this.manager.getBoxType(), this.manager.getBoxTypeNum(), this.manager.getCoinType()
+                    , this.manager.getCoinArr(), '0/' + this.manager.getBoxAmount());
+                    this.getViewComponent().collectTxt.string=this.manager.getBoxOwn()+'/' + this.manager.getBoxAmount().toString();
+                this.getViewComponent().node.setPosition(0,-30);
                 break;
             default:
                 break;
         }
-    }
-
-    showInfo()
-    {
-        this.getViewComponent().setInfo(this.manager.getBoxType(), this.manager.getBoxTypeNum(), this.manager.getCoinType()
-            , this.manager.getCoinArr(), '0/' + this.manager.getBoxAmount());
-        this.getViewComponent().collectTxt.string = this.manager.getBoxOwn() + '/' + this.manager.getBoxAmount().toString();
-        this.getViewComponent().node.setPosition(0, -30);
     }
 
     /**

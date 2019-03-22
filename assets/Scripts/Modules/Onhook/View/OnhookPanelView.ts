@@ -22,9 +22,6 @@ import { GameStorage } from "../../../Tools/GameStorage";
 import GameSchedule from "./GameSchedule";
 import { ServerSimulator } from "../../Missions/ServerSimulator";
 import { OnHookProtocal, HookLevelInfo } from "../../Missions/MissionManager";
-import { HttpRequest } from "../../../NetWork/HttpRequest";
-import { RequestType } from "../../../NetWork/NetDefine";
-import { NetOnHookPanel, NetCarinfo } from "../../../NetWork/NetMessage/NetOnHookInfo";
 
 const { ccclass, property } = cc._decorator;
 
@@ -65,15 +62,13 @@ export default class OnhookPanelView extends cc.Component {
     /**当前挂机所获取的所有食材及数量 */
     FoodArray: Map<number, number> = new Map<number, number>();
     Onhooks: OnHook = new OnHook();//挂机表数据
-    PanelLevel: number = 0//当前面板等级
+    PanelLevel: number = 0
     /**MVC Model */
     OnProxy: OnHookProxy = null;
     /**黄色条、当前属性总值 */
     ValueArr: Array<number> = [0.1, 0.3, 0.5, 0.7, 0.9, 1];
     numTime: number;
     FoodArrayNum: Array<MaterialsGridData> = [];
-    /**从服务器获取的面板所有数据 */
-    OnHookPanelData:NetOnHookPanel=new NetOnHookPanel();
     onLoad() {
         if (!Facade.getInstance().hasProxy('OnHookProxy')) {//OnHookProxy
             this.OnProxy = new OnHookProxy();
@@ -81,15 +76,9 @@ export default class OnhookPanelView extends cc.Component {
         } else {
             this.OnProxy = <OnHookProxy>Facade.getInstance().retrieveProxy('OnHookProxy');
         }
-       
-        
-        this.InterfacialStar();
-        
-    }
-    /**按钮事件注册 */
-    OnclickAddEvten() {  
+        /**按钮事件注册 */
         var k = this.node.getChildByName('explore_bj');
-        var MapLevelUp = this.node.getChildByName('MapLevelUp');//等级提升面板
+        var MapLevelUp=this.node.getChildByName('MapLevelUp');//等级提升面板
         k.getChildByName('close').on(System_Event.MOUSE_CLICK, this.OnClickEvent, this);
         MapLevelUp.getChildByName('MapLevelUpBack').on(System_Event.MOUSE_CLICK, this.OnClickEvent, this);
         MapLevelUp.getChildByName('bj').getChildByName('LevelUpclose').on(System_Event.MOUSE_CLICK, this.OnClickEvent, this);
@@ -107,57 +96,32 @@ export default class OnhookPanelView extends cc.Component {
         this.SpeedUp.getChildByName('Back').on(System_Event.MOUSE_CLICK, this.OnClickEvent, this);
         this.SpeedUp.getChildByName('Explore_BtnIng').getChildByName('SpeedUp').on(System_Event.MOUSE_CLICK, this.OnClickEvent, this);
         this.SpeedUp.getChildByName('Explore_End').on(System_Event.MOUSE_CLICK, this.OnClickEvent, this);
+        
+        this.InterfacialStar();
+        
     }
 
-    /**刷新挂机主界面*/
+    /**刷新挂机主界面计时器状态*/
     InterfacialStar() {
-        var self=this;
-        HttpRequest.getInstance().requestGet(RequestType.onhook_infos, function(ok:NetOnHookPanel){
-            self.OnHookPanelData=ok;
-            self.OnclickAddEvten();
-            for (let i = 0; i < ok.OnHookPanelInfoArray.length; i++){
-                var k = self.character_bj.parent.getChildByName('explore_bj');
-                var r:cc.Node = k.getChildByName(i.toString());
-                var b:cc.Node = r.getChildByName(i.toString());
-                if (ok.OnHookPanelInfoArray[i].onHookStatus==0){
-                    var look=DataManager.getInstance().OnhookMap.get(DataManager.getInstance().OnhookMap.get(ok.OnHookPanelInfoArray[i].onHookId)._UnlockID)._Name;
-                    r.on(System_Event.MOUSE_CLICK, function(){Log.ShowLog('通关'+look+'解锁')}, self);
-                    b.on(System_Event.MOUSE_CLICK, function(){Log.ShowLog('通关'+look+'解锁')}, self);
-                }else{
-                    r.getChildByName('explore_lock').active = false;
-                   b.active = true;
-                   r.on(System_Event.MOUSE_CLICK, self.onRegister, self);//按钮事件
-                   b.on(System_Event.MOUSE_CLICK, self.onRegister, self);//按钮事件
-                   self.starActi(r.getChildByName('star black'), i);
-                   if (ok.OnHookPanelInfoArray[i].onHookStatus==2||ok.OnHookPanelInfoArray[i].onHookStatus==3){
-                    var sty=ok.OnHookPanelInfoArray[i].onHookId.toString()+TableName.OnHook;
-                    GameManager.TimeEvent(sty,ok.OnHookPanelInfoArray[i].onHookWaitTime);
-                    b.getChildByName('label').getComponent(GameSchedule).Starschedule(sty);
-                   }
-                }
-            }
-        });
-        //#region 
         /**界面初始化 */
-        // for (let i = 1; i < 5; i++) {
-        //     
-        //     var look = DataManager.getInstance().OnhookMap.get(i * 10000 + 1);//每张地图的第一个数据
-        //     var r:cc.Node = k.getChildByName(i.toString());
-        //     var b:cc.Node = r.getChildByName(i.toString());
-        //     if (DataManager.getInstance().getLevelData(look._UnlockID.toString()) != null) {//判断是否解锁
-        //         r.getChildByName('explore_lock').active = false;
-        //         b.active = true;
-        //         r.on(System_Event.MOUSE_CLICK, this.onRegister, this);//按钮事件
-        //         b.on(System_Event.MOUSE_CLICK, this.onRegister, this);//按钮事件
-        //         this.starActi(r.getChildByName('star black'), i);
-        //         var names = DataManager.getInstance().OnhookMap.get(i * 10000 + 1)._Name.toString();
-        //         b.getChildByName('label').getComponent(GameSchedule).Starschedule(names + TableName.OnHook);
-        //     }else{
-        //         r.on(System_Event.MOUSE_CLICK, function(){Log.ShowLog('通关'+look._Name+'解锁')}, this);
-        //         b.on(System_Event.MOUSE_CLICK, function(){Log.ShowLog('通关'+look._Name+'解锁')}, this);
-        //     }
-        // }
-        //#endregion
+        for (let i = 1; i < 5; i++) {
+            var k = this.character_bj.parent.getChildByName('explore_bj');
+            var look = DataManager.getInstance().OnhookMap.get(i * 10000 + 1);//每张地图的第一个数据
+            var r:cc.Node = k.getChildByName(i.toString());
+            var b:cc.Node = r.getChildByName(i.toString());
+            if (DataManager.getInstance().getLevelData(look._UnlockID.toString()) != null) {//判断是否解锁         
+                r.getChildByName('explore_lock').active = false;
+                b.active = true;
+                r.on(System_Event.MOUSE_CLICK, this.onRegister, this);
+                b.on(System_Event.MOUSE_CLICK, this.onRegister, this);
+                this.starActi(r.getChildByName('star black'), i);
+                var names = DataManager.getInstance().OnhookMap.get(i * 10000 + 1)._Name.toString();
+                b.getChildByName('label').getComponent(GameSchedule).Starschedule(names + TableName.OnHook);
+            }else{
+                r.on(System_Event.MOUSE_CLICK, function(){Log.ShowLog('通关'+look._Name+'解锁')}, this);
+                b.on(System_Event.MOUSE_CLICK, function(){Log.ShowLog('通关'+look._Name+'解锁')}, this);
+            }
+        }
     }
 
     /**界面按钮事件 */
@@ -177,17 +141,13 @@ export default class OnhookPanelView extends cc.Component {
             }else if (DataManager.getInstance().OnhookMap.get(hb._UnlockID)._Consume.size>0&&CurrencyManager.getInstance().Coin<DataManager.getInstance().OnhookMap.get(hb._UnlockID)._Consume.get(10001)){
                 Log.ShowLog('金币不足');
             }else{
-                var facade=<OnHookProxy>Facade.getInstance().retrieveProxy('OnHookProxy');
-                var self=this;
-                facade.OnHooklevelUp(self.Onhooks._ID,function(){
-                    CurrencyManager.getInstance().Coin-=DataManager.getInstance().OnhookMap.get(self.OnProxy.HookData.get(self.Onhooks._Name).OnHookID)._Consume.get(10001);
-                    self.OnProxy.HookData.get(self.Onhooks._Name).HB._Level++;
-                    var names=self.Onhooks._Name=='湖泊'?'1':self.Onhooks._Name=='山岳'?'2':self.Onhooks._Name=='山麓'?'3':'4';
-                    var ne:any=new cc.Node(names);
-                    ServerSimulator.getInstance().updateOnHook(new OnHookProtocal((self.Onhooks._ID+1),null));
-                    self.onRegister(ne);//刷新主面板
-                    self.PanelLevelUp();//刷新升级面板
-                });
+                CurrencyManager.getInstance().Coin-=DataManager.getInstance().OnhookMap.get(this.OnProxy.HookData.get(this.Onhooks._Name).OnHookID)._Consume.get(10001);
+                this.OnProxy.HookData.get(this.Onhooks._Name).LevelUp();
+                var names=this.Onhooks._Name=='湖泊'?'1':this.Onhooks._Name=='山岳'?'2':this.Onhooks._Name=='山麓'?'3':'4';
+                var ne:any=new cc.Node(names);
+                ServerSimulator.getInstance().updateOnHook(new OnHookProtocal((this.Onhooks._ID+1),null));
+                this.onRegister(ne);
+                this.PanelLevelUp();
             }
             break;
             case 'close':
@@ -244,18 +204,14 @@ export default class OnhookPanelView extends cc.Component {
                 break;
             case 'SpeedUp'://加速
                 var AJadeDisc = Number(this.SpeedUp.getChildByName('Explore_BtnIng').getChildByName('SpeedUp').getChildByName('Label').getComponent(cc.Label).string);
-                var self=this;
-                //挂机加速
-                self.OnProxy.OnHookSpeedUp(self.Onhooks._ID,function(){
-                    if (CurrencyManager.getInstance().Money >= AJadeDisc) {
-                        CurrencyManager.getInstance().Money -= AJadeDisc;
-                        self.SpeedUp.getChildByName('Explore_BtnIng').active = false;
-                        self.SpeedUp.getChildByName('Explore_End').active = true;
-                        GameStorage.setItem(self.Onhooks._Name + TableName.OnHook, 0);//设置任务为已完成
-                    } else {
-                        Log.ShowLog('玉璧不够');
-                    }
-                })
+                if (CurrencyManager.getInstance().Money >= AJadeDisc) {
+                    CurrencyManager.getInstance().Money -= AJadeDisc;
+                    this.SpeedUp.getChildByName('Explore_BtnIng').active = false;
+                    this.SpeedUp.getChildByName('Explore_End').active = true;
+                    GameStorage.setItem(this.Onhooks._Name + TableName.OnHook, 0);//设置任务为已完成
+                } else {
+                    Log.ShowLog('玉璧不够');
+                }
                 break;
             case 'Explore_End':
                 this.OnProxy.EndOnHook(this.Onhooks._Name);
@@ -298,19 +254,16 @@ export default class OnhookPanelView extends cc.Component {
      */
     onRegister(nd:any) {
         /**数据获取及设置*/
-        var self=this;
-        var onHookType = (nd instanceof cc.Node)?Number(nd.name):Number(nd.node.name);//这里的按钮名称+1默认等于地图类型
-        onHookType=onHookType+1;
-        var dalt = GameManager.getInstance().GetOnHook(onHookType, true);//获取当前地图所有等级数据
-        var onhookdata=this.OnHookPanelData.GetOnHookTypeInfo(onHookType);//当前挂机面板数据类
-        this.PanelLevel = onhookdata.onHookLevel;
-        var id = onhookdata.onHookId;//获取id
-        this.Onhooks = DataManager.getInstance().OnhookMap.get(id);//获取当前id的数据Onhooks类
-        this.OnProxy.HookData.get(this.Onhooks._Name).OnHookID = this.Onhooks._ID;//初始化数据
+        var rp = (nd instanceof cc.Node)?Number(nd.name):Number(nd.node.name);
+        var dalt = GameManager.getInstance().GetOnHook(rp, true);//获取当前地图所有等级数据
+        this.PanelLevel = this.OnProxy.GetOnHookMapData(rp);
+        var id = (rp * 10000 +this.PanelLevel);//获取id
+        this.Onhooks = DataManager.getInstance().OnhookMap.get(id);//获取当前id的数据
+        this.OnProxy.HookData.get(this.Onhooks._Name).OnHookID = this.Onhooks._ID;
         
-        var sty = GameManager.TimeEvent(this.Onhooks._Name + TableName.OnHook)//获取当前面板是否在挂机
-        var look = DataManager.getInstance().OnhookMap.get(onHookType * 10000 + 1);//该类的第一个数据
-        if (onhookdata.onHookStatus==0) {
+        var sty = GameManager.TimeEvent(this.Onhooks._Name + TableName.OnHook)
+        var look = DataManager.getInstance().OnhookMap.get(rp * 10000 + 1);//解锁D
+        if (DataManager.getInstance().getLevelData(look._UnlockID.toString()) == null) {
             Log.ShowLog('通关' + DataManager.getInstance().levelTableMap.get(look._UnlockID)._Name + '解锁');
             return;
         }
@@ -335,6 +288,7 @@ export default class OnhookPanelView extends cc.Component {
                     if (i > 1) f.getChildByName('explore_lock').active = false;
                 }
             }
+            var arr = this.OnProxy.GetOnhooKPreson(this.Onhooks._Name);
             var roleproxy = <RoleProxy>Facade.getInstance().retrieveProxy('RoleProxy');
             this.sprites.fillRange = 0;
             this.Dic.clear();
@@ -494,16 +448,16 @@ export default class OnhookPanelView extends cc.Component {
         var is: number = -1;//代表数值
         var dalt = GameManager.getInstance().GetOnHook(Math.floor(this.Onhooks._ID / 10000), true);
         this.FoodArray.clear();
-        for (let i = 0; i < dalt.length; i++) {
+        for (let i = 0; i < dalt.length; i++) { 
             if (vuale >= dalt[i]._ConditionValue){
-                is = i;
+                is = i; 
             }
-            if (vuale >= dalt[i]._ConditionValue&&this.PanelLevel>i){
-                this.FoodArray.set(dalt[i]._FoodMaterial, dalt[i]._FoodNumber);
-                this.character_bj.getChildByName((i + 1).toString()).color = this.colorarr[0];
+            if (vuale >= dalt[i]._ConditionValue&&this.PanelLevel>i){          
+                this.FoodArray.set(dalt[i]._FoodMaterial, dalt[i]._FoodNumber); 
+                this.character_bj.getChildByName((i + 1).toString()).color = this.colorarr[0]
             } else {
-                this.character_bj.getChildByName((i + 1).toString()).color = this.colorarr[1];
-            }
+                this.character_bj.getChildByName((i + 1).toString()).color = this.colorarr[1] 
+            } 
         }
         var molecule = vuale - (is == -1 ? 0 : dalt[is]._ConditionValue);//分子
         var denominator = is < 0 ? dalt[0]._ConditionValue : (dalt[is]._ConditionValue - (is < 1 ? 0 : dalt[is - 1]._ConditionValue));//分母
@@ -515,48 +469,43 @@ export default class OnhookPanelView extends cc.Component {
 
     //#region 车界面
     CaronRegister(name: string) {
-        var self = this;
         this.upgrade.active = true;
         var k = this.OnProxy.HookData.get(this.Onhooks._Name).HB;
         k._Roadster = 50001;
         this.slider.progress = k._Time / 8;
         this.slider.node.getChildByName('Handle').getChildByName('label').getComponent(cc.Label).string = k._Time.toString();
         var double = k._Quadruple ? 2 : 1;
+        var self = this;
         self.upgradeContent.removeAllChildren();
         if (self.FoodArray.size >= 5) {
             self.upgradeContent.setPosition(25, 0);
         } else {
             self.upgradeContent.setPosition(0, 0);
         }
-
-        /**展示车界面数据 */
-        HttpRequest.getInstance().requestGet(RequestType.onhook_carinfos, function (nr: NetCarinfo) {
-            var pageview = self.upgrade.getChildByName('pageview').getComponent(cc.PageView);
-            pageview.removeAllPages();
-            /**车数据申请 */
-            ResourceManager.getInstance().loadResources('prefabs/TreasureItems/OnHook_CarItem', cc.Prefab, function (prefab) {
-                for (let i = 0; i < nr.carList.length; i++) {
-                    if (nr.carList[i].carStatus == 1) {
-                        var orj: cc.Node = ObjectTool.instanceWithPrefab(nr.carList[i].carId.toString(), prefab);
-                        orj.parent = null;
-                        pageview.addPage(orj);
-                        var value = DataManager.getInstance().CarMap.get(nr.carList[i].carId);
-                        orj.getChildByName('label').getComponent(cc.Label).string = value._Name.toString();
-                        orj.getChildByName('richtext').getComponent(cc.RichText).string = '<color=#FF4800>' + (value._Skill == 1 ? '谷类' : value._Skill == 2 ? '肉类' : value._Skill == 3 ? '蔬菜' : '调料') + '</c><color=#ced4af>' + '采集+' + value._Value + '%</color>';
-                        ResourceManager.getInstance().loadResources('UI/car/' + value._Icon, cc.SpriteFrame, function (SpriteFrame) {
-                            orj.getChildByName('icon').getComponent(cc.Sprite).spriteFrame = SpriteFrame;
-                        });
-                    }
-                }
+        ResourceManager.getInstance().loadResources(ConfigurationInformation.ExporePanel_MaterialsGrid_prefab, cc.Prefab, function (prefab) {
+            self.FoodArray.forEach((value, key) => {
+                var obj = ObjectTool.instanceWithPrefab(key.toString(), prefab, self.upgradeContent)
+                obj.getComponent(MaterialsGridData).SteMainDate(key, value, k._Time * double);
+                self.FoodArrayNum.push(obj.getComponent(MaterialsGridData));
             });
-            /**食材数据显示 */
-            ResourceManager.getInstance().loadResources(ConfigurationInformation.ExporePanel_MaterialsGrid_prefab, cc.Prefab, function (prefab) {
-                self.FoodArray.forEach((value, key) => {
-                    var obj = ObjectTool.instanceWithPrefab(key.toString(), prefab, self.upgradeContent)
-                    obj.getComponent(MaterialsGridData).SteMainDate(key, value, k._Time * double);
-                    self.FoodArrayNum.push(obj.getComponent(MaterialsGridData));
-                });
-                self.Slidercallback(null);
+        });
+
+        //var carParent = this.upgrade.getChildByName('pageview').getChildByName('view').getChildByName('content');
+        var pageview=this.upgrade.getChildByName('pageview').getComponent(cc.PageView);
+        pageview.removeAllPages();
+       
+        ResourceManager.getInstance().loadResources('prefabs/TreasureItems/OnHook_CarItem', cc.Prefab, function (prefab) {
+            DataManager.getInstance().CarMap.forEach((value, key) => {
+                if (self.OnProxy.CarUsable(key)) {
+                    var orj:cc.Node = ObjectTool.instanceWithPrefab(key.toString(), prefab);
+                    orj.parent=null;
+                    pageview.addPage(orj);
+                    orj.getChildByName('label').getComponent(cc.Label).string = value._Name;
+                    orj.getChildByName('richtext').getComponent(cc.RichText).string = '<color=#FF4800>' + (value._Skill == 1 ? '谷类' : value._Skill == 2 ? '肉类' : value._Skill == 3 ? '蔬菜' : '调料') + '</c><color=#ced4af>' + '采集+' + value._Value + '%</color>';
+                    ResourceManager.getInstance().loadResources('UI/car/' + value._Icon, cc.SpriteFrame, function (SpriteFrame) {
+                        orj.getChildByName('icon').getComponent(cc.Sprite).spriteFrame = SpriteFrame;
+                    });
+                }
             });
         });
     }
@@ -564,7 +513,7 @@ export default class OnhookPanelView extends cc.Component {
 
     /**滑动选择时间 */
     Slidercallback(event: any) {
-        var slider =event==null?1: Math.ceil(event.progress * 8);
+        var slider = Math.ceil(event.progress * 8);
         this.numTime = slider == 0 ? 1 : slider;
         this.OnProxy.HookData.get(this.Onhooks._Name).HB._Time = this.numTime;
         this.slider.node.getChildByName('Handle').getChildByName('label').getComponent(cc.Label).string = this.numTime.toString();

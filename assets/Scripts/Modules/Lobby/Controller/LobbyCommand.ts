@@ -38,7 +38,7 @@ export class LobbyCommand extends SimpleCommand
         this.initData();
         this.sendNotification(GameCommand.UPDATE_CURRENCY);
 
-        //MissionManager.getInstance().checkMissionState();
+        MissionManager.getInstance().checkMissionState();
         //CookingNetwork.getInstance().checkCooking();
 
         if (Game.Instance.isConnectServer) this.requestData();
@@ -59,6 +59,7 @@ export class LobbyCommand extends SimpleCommand
     {
         HttpRequest.getInstance().requestPost(RequestType.character_info, null);
         HttpRequest.getInstance().requestPost(RequestType.currency_info, null);
+        
         HttpRequest.getInstance().requestPost(RequestType.props_info, null);
     }
 

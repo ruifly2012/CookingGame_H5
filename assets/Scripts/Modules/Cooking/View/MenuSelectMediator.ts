@@ -112,7 +112,7 @@ export class MenuSelectMediator extends Mediator {
 
     /** 获取任务目标 */
     requestMission(): any {
-        let menus: CookMenuVo[] = ServerSimulator.getInstance().LeadObjects;
+        let menus: CookMenuVo[] = MissionManager.getInstance().CurrMission.leadObject;
         let targetList: MenuSelectItem[] = [];
         if(menus==null) return ;
         for (let i = 0; i < menus.length; i++) {

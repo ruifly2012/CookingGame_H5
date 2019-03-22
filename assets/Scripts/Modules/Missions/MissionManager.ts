@@ -13,9 +13,6 @@ import { CurrencyManager } from "../../Managers/ CurrencyManager";
 import { UIManager } from "../../Managers/UIManager";
 import { GameCommand } from "../../Events/GameCommand";
 import NotificationView from "../../Common/NotificationView";
-import { HttpRequest } from "../../NetWork/HttpRequest";
-import { RequestType } from "../../NetWork/NetDefine";
-import { NetMissionReward } from "../../NetWork/NetMessage/NetMissionInfo";
 
 
 export enum MissionType
@@ -37,13 +34,13 @@ export enum MissionType
     /** 关卡 */
     LEVEL = 7,
     /** 探索地域 */
-    EXPOLRE_TREERIN = 8,
+    EXPOLRE_TREERIN=8,
     /** 探索食材 */
-    EXPOLRE_GET_FOODMATERIAL = 9,
+    EXPOLRE_GET_FOODMATERIAL=9,
     /** 探索X类食材 */
-    EXPOLRE_GET_SPECIAL_FOODMATERIAL = 10,
+    EXPOLRE_GET_SPECIAL_FOODMATERIAL=10,
     /** 探索地域等级 */
-    EXPOLRE_LEVEL = 11
+    EXPOLRE_LEVEL=11
 }
 
 
@@ -78,7 +75,32 @@ export class MissionManager
         this.server = ServerSimulator.getInstance();
         //this.currMission = DataManager.getInstance().MissionMap.get(ServerSimulator.getInstance().getMissionProgress());
         this.currMission = this.server.getMission();
+        
+        /*let info:HookLevelInfo=new HookLevelInfo();
+        info._Level=1;
+        info._PropID=2;
+        info._IsLock=true;
+        info._Amount=3;
 
+        let info2:HookLevelInfo=new HookLevelInfo();
+        info2._Level=2;
+        info2._PropID=3;
+        info2._IsLock=true;
+        info2._Amount=4;
+
+        let info3:HookLevelInfo=new HookLevelInfo();
+        info3._Level=3;
+        info3._PropID=3;
+        info3._IsLock=true;
+        info3._Amount=4;
+
+        let arrs:Array<HookLevelInfo>=new Array();
+        arrs.push(info);
+        arrs.push(info2);
+        arrs.push(info3);
+        let h:OnHookProtocal=new OnHookProtocal(1111,arrs);
+        h._Time=3;
+        this.server.updateOnHook(h);*/
     }
 
     processTask()
@@ -103,8 +125,7 @@ export class MissionManager
     {
         Facade.getInstance().sendNotification(GameCommand.MISSION_STATE_UPDATE, MissionEvent.CHECK_MISSION);
         if (this.currMission._IsComplete) return;
-        if(targetVal==0) return ;
-        console.log('进度：', targetVal, ',总值: ', this.currMission._CompleteVal);
+        Log.Info('进度：', targetVal, ',总值: ', this.currMission._CompleteVal);
         if (Number(targetVal) >= this.currMission._CompleteVal)
         {
             this.missionComplete();
@@ -143,7 +164,6 @@ export class MissionManager
      */
     missionComplete()
     {
-
         NotificationView.Instance.showNotify('任务完成', this.currMission._Description);
         this.currMission._IsComplete = true;
         this.currMission._CurrProgress = this.currMission._CompleteVal;
@@ -170,11 +190,10 @@ export class MissionManager
      */
     checkMissionState()
     {
-        if (this.currMission._IsComplete)
+        if(this.currMission._IsComplete)
         {
-            if (GameStorage.getItem('MISSION_COMPLETE') == null)
-            {
-                this.currMission._CurrProgress = this.currMission._CompleteVal;
+            if (GameStorage.getItem('MISSION_COMPLETE') == null) {
+                this.currMission._CurrProgress=this.currMission._CompleteVal;
                 Facade.getInstance().sendNotification(GameCommand.MISSION_STATE_UPDATE, MissionEvent.MISSION_COMPLETE);
             }
             else this.allMissionComplete = true;
@@ -184,7 +203,7 @@ export class MissionManager
             this.server.updateMissionData();
             this.server.check();
         }
-
+        
     }
 
     /**
@@ -196,7 +215,7 @@ export class MissionManager
         {
             GameStorage.remove('MISSION_COMPLETE');
             this.giveReward();
-            //this.setNextMission();
+            this.setNextMission();
         }
         else
         {
@@ -235,35 +254,16 @@ export class MissionManager
      */
     giveReward()
     {
-        let self=this;
-        /* HttpRequest.getInstance().requestPost(RequestType.task_reward, function (_data: NetMissionReward)
-        {
-            //console.log(_data);
-            CurrencyManager.getInstance().Coin = _data.gold;
-            CurrencyManager.getInstance().Money = _data.diamonds;
-            self.currMission.reset();
-            self.currMission = DataManager.getInstance().MissionMap.get(Number(_data.nextMainTaskId));
-            ServerSimulator.getInstance().setMissionProgress(self.currMission._ID);
-            Facade.getInstance().sendNotification(MissionEvent.MISSION_SHOW);
-
-        }); */
         for (let i = 0; i < this.currMission._RewardRes.length; i++)
         {
             let reward = this.currMission._RewardRes[i];
-            if (reward._ID == 10001)
-            {
-                //CurrencyManager.getInstance().Coin += Number(reward._Val);
-            }
-            else if (reward._ID == 10002)
-            {
-                //CurrencyManager.getInstance().Money += Number(reward._Val);
-            }
+            if (reward._ID == 10001) { CurrencyManager.getInstance().Coin += Number(reward._Val); }
+            else if (reward._ID == 10002) { CurrencyManager.getInstance().Money += Number(reward._Val); }
             else
             {
                 DataManager.getInstance().addPropNum(reward._ID, reward._Val);
             }
         }
-        this.setNextMission();
     }
 
     getCurrMissionLocation(): UIPanelEnum
@@ -341,30 +341,30 @@ export class OnHookProtocal
      * 挂机ID
      */
     _ID: number = 0;
-    _MaxLevel: number = 0;
+    _MaxLevel:number=0;
     /**
      * 等级数据
      */
-    _LevelInfo: HookLevelInfo[] = [];
+    _LevelInfo:HookLevelInfo[]=[];
 
-    _Time: number = 0;
+    _Time:number=0;
 
     /**
      * 
      * @param _id 挂机ID
      * @param _levelInfo 等级信息 
      */
-    constructor(_id: number, _levelInfo: HookLevelInfo[])
+    constructor(_id: number, _levelInfo:HookLevelInfo[])
     {
         this._ID = _id;
-        this._LevelInfo = _levelInfo;
+        this._LevelInfo=_levelInfo;
     }
 
-    setMaxLevel(_level: number)
+    setMaxLevel(_level:number)
     {
-        if (_level > this._MaxLevel && _level <= 5)
+        if(_level>this._MaxLevel && _level<=5)
         {
-            this._MaxLevel = _level;
+            this._MaxLevel=_level;
         }
     }
 }
@@ -374,25 +374,24 @@ export class HookLevelInfo
     /**
      * 该挂机的等级
      */
-    _Level: number = 0;
+    _Level:number=0;
     /**
      * 是否解锁
      */
-    _IsLock: boolean = false;
+    _IsLock:boolean=false;
     /**
      * 道具ID
      */
-    _PropID: number = 0;
+    _PropID:number=0;
     /**
      * 道具数量
      */
-    _Amount: number = 0;
+    _Amount:number=0;
 
-    constructor(Level: number, propid: number, amount: number)
-    {
-        this._Level = Level;
-        this._PropID = propid;
-        this._Amount = amount;
+    constructor(Level:number,propid:number,amount:number){
+        this._Level=Level;
+        this._PropID=propid;
+        this._Amount=amount;
     }
 }
 

@@ -537,7 +537,6 @@ export class DataManager
             this.basePropVoMap.forEach((value, id) =>
             {
                 GameStorage.setItem(id.toString(), value._Amount);
-                
                 if(value._Type==2)
                 {
                     this.baseMenuMap.set(id,this.TableMenuMap.get(id));
@@ -548,11 +547,11 @@ export class DataManager
                 }
             });
         }
-        /* this.basePropVoMap=this.PropVoMap;
+        this.basePropVoMap=this.PropVoMap;
         this.basePropVoMap.forEach((value,id)=>{
             value._Amount=1000;
             GameStorage.setItem(id.toString(), value._Amount);
-        }); */
+        });
     }
 
     public updateFoodMaterial()
@@ -652,7 +651,7 @@ export class DataManager
         let _role: PresonDataBase = this.TableRoleMap.get(_id);
         GameStorage.setItemJson(_id.toString(), _role);
         this.baseRoleMap.set(_id, _role);
-        HttpRequest.getInstance().requestPost(RequestType.character_addcharacter,null,'{"characterId":'+_id+'}');
+        HttpRequest.getInstance().requestPost(RequestType.character_addcharacter,null);
     }
 
     /**

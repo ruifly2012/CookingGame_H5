@@ -335,7 +335,7 @@ export default class RolePanel extends cc.Component
      * 显示装备列表
      * @param _equips 
      */
-    showEquipsInfo(_equips: Array<ItemVo>,_role:PresonDataBase)
+    showEquipsInfo(_equips: Array<ItemVo>)
     {
         this.equipContents.destroyAllChildren();
         let _equipPrefab: cc.Prefab = AssetManager.getInstance().prefabMap.get('equip_item');
@@ -415,6 +415,7 @@ export default class RolePanel extends cc.Component
         else node1.getComponent(EquipmentDetail).unHasStateBtn();
         node1.active = true;
         node2.active = false;
+
     }
 
     /**

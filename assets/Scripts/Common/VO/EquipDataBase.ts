@@ -18,8 +18,6 @@ export class EquipDataBase
     /** 图标 */
     public _Icon: string = '';
 
-    
-
 
     /**
      * 从属性名获取装备属性加成值

@@ -80,6 +80,7 @@ export class CookingMediator extends Mediator
 
     onUpdate(dt)
     {
+        //Log.Info('dt.....',dt);
         if (this.cookingProxy.cookingStatus == CookingStatus.Cooking)
         {
             this.getViewComponent().countdownPanel.getComponent(CookingCountdownView).updateCount(this.cookingProxy.TimeStr, this.cookingProxy.MoneySum);
@@ -227,7 +228,7 @@ export class CookingMediator extends Mediator
                 this.getViewComponent().countdownPanel.active = false;
                 //显示做菜完成收获界面
                 this.sendNotification(CookingEvent.SHOW_BUSINESS_MENU, this.cookingProxy.CookingMap);
-                //this.cookingProxy.showVisitor();
+                this.cookingProxy.showVisitor();
                 //this.getViewComponent().businessView.getComponent(BusinessView).showReward();
             }
 
@@ -461,7 +462,7 @@ export class CookingMediator extends Mediator
         this.sendNotification(CookingEvent.SHOW_BUSINESS_MENU, this.cookingProxy.CookingMap);
         //显示做菜完成收获界面
         this.getViewComponent().businessView.getComponent(BusinessView).showReward();
-        //this.cookingProxy.showVisitor();
+        this.cookingProxy.showVisitor();
     }
 
     /**

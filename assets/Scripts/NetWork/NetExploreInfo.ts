@@ -1,5 +1,5 @@
-import { NetTaskInfo, NetProps } from "./NetCommonality";
 import { NetRoleInfo } from "./NetMessage/NetRoleInfo";
+import { NetTaskInfo, NetProps } from "./NetMessage/NetCommonality";
 
 /**冒险 */
 export  class NetExploreInfo {

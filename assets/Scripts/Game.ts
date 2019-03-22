@@ -1,8 +1,6 @@
 
 import { GameStorage } from "./Tools/GameStorage";
 import { JHFacade } from "./_GameRoot/JHFacade";
-import { ObjectTool } from "./Tools/ObjectTool";
-import { NetTreasureInfo } from "./NetWork/NetMessage/NetTreasureInfo";
 
 const { ccclass, property } = cc._decorator;
 
@@ -13,42 +11,41 @@ const { ccclass, property } = cc._decorator;
 export default class Game extends cc.Component 
 {
     @property(cc.Boolean)
-    isClearData: boolean = false;
+    isClearData:boolean=false;
     @property(cc.Boolean)
-    showLog: boolean = false;
+    showLog:boolean=false;
     @property(cc.Boolean)
-    isConnectServer: boolean = false;
-    static Instance: Game = null;
-    onUpdate: any = null;
+    isConnectServer:boolean=false;
+    static Instance:Game=null;
+    onUpdate:any=null;
 
-    onLoad()
-    {
-        if (this.isClearData) 
+    onLoad() {       
+        if(this.isClearData) 
         {
             GameStorage.clear();
         }
-
-        Game.Instance = this;
+        
+        Game.Instance=this;
     }
 
-    start()
-    {
+    start() {
         //CurrencyManager.getInstance().Coin=100;
         JHFacade.initializeController();
         JHFacade.start(this.node);
+        
+       
     }
+    
 
-
-    update(dt)
-    {
-
+    update(dt) {
+        
     }
 
     scheduleTime()
     {
-        if (this.onUpdate != null)
+        if(this.onUpdate!=null)
         {
-            this.schedule(this.onUpdate, 1);
+            this.schedule(this.onUpdate,1);
         }
     }
 }

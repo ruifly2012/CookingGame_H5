@@ -52,20 +52,20 @@ export class RoleProxy extends Proxy implements IProxy
         {
             this.roleList.push(value);
         });
-
+        
     }
 
-    initRole(info: NetRoleInfo[])
+    netInit(info: NetRoleInfo[])
     {
-        this.roleData = new Map();
-        this.roleList = new Array();
-        let role: PresonDataBase = new PresonDataBase();
-        DataManager.getInstance().baseRoleMap = new Map();
+        this.roleData=new Map();
+        this.roleList=new Array();
+        let role: PresonDataBase=new PresonDataBase();
+        DataManager.getInstance().baseRoleMap=new Map();
         for (let i = 0; i < info.length; i++)
         {
             let _info: NetRoleInfo = info[i];
             role = DataManager.getInstance().TableRoleMap.get(_info.characterId);
-            role._ID = Number(_info.characterId);
+            role._ID=Number(_info.characterId);
             role._Level = Number(_info.level);
             role._AdvanceLevel = Number(_info.advanceLevel);
             role._Power = Number(_info.power);
@@ -77,36 +77,25 @@ export class RoleProxy extends Proxy implements IProxy
             role._Savvy = Number(_info.savvy);
             role._Luck = Number(_info.luck);
             role._NowState = Number(_info.characterState);
-            DataManager.getInstance().baseRoleMap.set(role._ID, role);
+            DataManager.getInstance().baseRoleMap.set(role._ID,role);
         }
         this.roleData = DataManager.getInstance().baseRoleMap;
         this.roleData.forEach((value, key) =>
         {
             this.roleList.push(value);
         });
+        this.sendNotification(RoleInfoEvent.INIT_ROLE);
     }
 
-    updateRole(_info: NetRoleInfo)
+    updateRole()
     {
-        let role: PresonDataBase = this.roleData.get(Number(_info.characterId));
-        role._ID = Number(_info.characterId);
-        role._Level = Number(_info.level);
-        role._AdvanceLevel = Number(_info.advanceLevel);
-        role._Power = Number(_info.power);
-        role._Agility = Number(_info.agility);
-        role._PhysicalPower = Number(_info.physicalPower);
-        role._Will = Number(_info.will);
-        role._Cooking = Number(_info.cooking);
-        role._Vigor = Number(_info.vigor);
-        role._Savvy = Number(_info.savvy);
-        role._Luck = Number(_info.luck);
-        role._NowState = Number(_info.characterState);
-    }
-
-    addRole(roleID: number)
-    {
-        this.roleData.set(roleID, DataManager.getInstance().TableRoleMap.get(roleID));
-        this.roleList.push(this.roleData.get(roleID));
+        this.roleData = new Map();
+        this.roleData = DataManager.getInstance().baseRoleMap;
+        this.roleList = new Array();
+        this.roleData.forEach((value, key) =>
+        {
+            this.roleList.push(value);
+        });
     }
 
     public getOwnerRole()
@@ -269,9 +258,9 @@ export class RoleProxy extends Proxy implements IProxy
         return num;
     }
 
-    public upgradeLevel(id: number)
+    public upgradeLevel(id:number)
     {
-        HttpRequest.getInstance().requestPost(RequestType.character_uplevel, null, '{"type":1,"characterId":' + id + '}');
+        HttpRequest.getInstance().requestPost(RequestType.character_uplevel,null,'{"type":1,"characterId":'+id+'}');
         this.upgradeAttr(id);
     }
 
@@ -310,7 +299,7 @@ export class RoleProxy extends Proxy implements IProxy
      */
     public fullUpgradeAttr(id: number)
     {
-        HttpRequest.getInstance().requestPost(RequestType.character_uplevel, null, '{"type":2,"characterId":' + id + '}');
+        HttpRequest.getInstance().requestPost(RequestType.character_uplevel,null,'{"type":2,"characterId":'+id+'}');
         let role: PresonDataBase = this.roleData.get(id);
         let costAmount: number = 0;
         DataManager.getInstance().UpgradeAttrMap.forEach((value, key) =>
@@ -335,7 +324,7 @@ export class RoleProxy extends Proxy implements IProxy
                 }
             }
         });
-
+        
         CurrencyManager.getInstance().Coin -= costAmount;
         DataManager.getInstance().changeRoleAttr(role._ID, role);
         if (role._Level == 20 || role._Level == 40) this.sendNotification(RoleInfoEvent.ADVANCE_UP);
@@ -356,12 +345,12 @@ export class RoleProxy extends Proxy implements IProxy
      */
     takeoutAdvanceProp(id: number)
     {
-        HttpRequest.getInstance().requestPost(RequestType.character_upadvance_level, null, '{"characterId":' + id + '}');
+        HttpRequest.getInstance().requestPost(RequestType.character_upadvance_level,null,'{"characterId":'+id+'}');
         let role: PresonDataBase = this.roleData.get(id);
         let key = Number(role._AdvancedCost.toString() + (role._AdvanceLevel - 1).toString());
         let vo: RoleAdvanceVo = DataManager.getInstance().UpgradeAdvanceMap.get(key);
         //Log.Info(DataManager.getInstance().PropVoMap.get(vo._PropID)._Amount, '----', vo._PropNum);
-        let prop: PropVo = DataManager.getInstance().PropVoMap.get(vo._PropID);
+        let prop:PropVo=DataManager.getInstance().PropVoMap.get(vo._PropID);
         prop._Amount -= vo._PropNum;
         prop._Amount = MathTool.Abs(prop._Amount);
         DataManager.getInstance().savePropNum(vo._PropID, prop._Amount);

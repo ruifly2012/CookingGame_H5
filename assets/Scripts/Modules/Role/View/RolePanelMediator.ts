@@ -38,7 +38,6 @@ export class RolePanelMediator extends Mediator
     proxyData: RoleProxy;
     roleItemList: Array<RoleItemView> = new Array();
     currRole: PresonDataBase = new PresonDataBase();
-    dataManager:DataManager;
 
     /**
      * 
@@ -48,7 +47,6 @@ export class RolePanelMediator extends Mediator
     {
         super(view);
         this.setViewComponent(view.getComponent(RolePanel));
-        this.dataManager=DataManager.getInstance();
         this.mediatorName = RolePanelMediator.name;
         this.proxyData = <RoleProxy>Facade.getInstance().retrieveProxy(RoleProxy.name);
 
@@ -89,9 +87,9 @@ export class RolePanelMediator extends Mediator
      */
     upgradeFullLevelEvent(e:cc.Event.EventCustom)
     {
-        if (CurrencyManager.getInstance().Coin < this.proxyData.upgradeFullCost(this.currRole._ID)) return;
-        this.proxyData.fullUpgradeAttr(this.currRole._ID);
-        this.updateUpgradeInfo(this.currRole._ID);
+        if (CurrencyManager.getInstance().Coin < this.proxyData.upgradeFullCost(this.getViewComponent().currRoleID)) return;
+        this.proxyData.fullUpgradeAttr(this.getViewComponent().currRoleID);
+        this.updateUpgradeInfo(this.getViewComponent().currRoleID);
         
     }
 
@@ -102,13 +100,13 @@ export class RolePanelMediator extends Mediator
      */
     upgradeAdvanceLevelEvent(e:cc.Event.EventCustom)
     {
-        let vo: RoleAdvanceVo = this.proxyData.getAdvanceVo(this.currRole._ID);
+        let vo: RoleAdvanceVo = this.proxyData.getAdvanceVo(this.getViewComponent().currRoleID);
         //Log.Info(vo._PropID);
-        let iconName = this.dataManager.PropVoMap.get(vo._PropID)._ResourceName;
+        let iconName = DataManager.getInstance().PropVoMap.get(vo._PropID)._ResourceName;
         let icon: cc.SpriteFrame = this.proxyData.getSpriteFromAtlas(iconName);
-        let id: number = this.proxyData.GetRoleFromID(Number(this.currRole._ID))._Skill;
-        let skill: SkillDataBase = this.dataManager.SkillVarMap.get(Number(id));
-        this.getViewComponent().showAdvancePanel(icon, String(this.proxyData.upgradeLevelCost(this.currRole._ID)), String(vo._PropNum), skill._Describe);
+        let id: number = this.proxyData.GetRoleFromID(Number(this.getViewComponent().currRoleID))._Skill;
+        let skill: SkillDataBase = DataManager.getInstance().SkillVarMap.get(Number(id));
+        this.getViewComponent().showAdvancePanel(icon, String(this.proxyData.upgradeLevelCost(this.getViewComponent().currRoleID)), String(vo._PropNum), skill._Describe);
     }
 
     /**
@@ -118,8 +116,8 @@ export class RolePanelMediator extends Mediator
     affirmAdvance(e): any
     {
         this.getViewComponent().advancePanel.active = false;
-        this.proxyData.upgradeAttr(this.currRole._ID);
-        this.proxyData.takeoutAdvanceProp(this.currRole._ID);
+        this.proxyData.upgradeAttr(this.getViewComponent().currRoleID);
+        this.proxyData.takeoutAdvanceProp(this.getViewComponent().currRoleID);
         
     }
 
@@ -234,7 +232,7 @@ export class RolePanelMediator extends Mediator
         let item: RoleItemView = <RoleItemView>data.target.getComponent(RoleItemView);
         this.showRoleDetailInfo(item.ID);
         let basedata: PresonDataBase = this.proxyData.GetRoleFromID(item.ID);
-        if (basedata._Level <= 40) this.updateAdvanceInfo();
+        if (basedata._Level < 60) this.updateAdvanceInfo();
     }
 
     /**
@@ -243,9 +241,9 @@ export class RolePanelMediator extends Mediator
      */
     showRoleDetailInfo(_ID: number)
     {
-        let basedata: PresonDataBase = this.proxyData.GetRoleFromID(Number(_ID));
+        //let index: number = item.ID;
+        let basedata: PresonDataBase = this.proxyData.GetRoleFromID(_ID);
         this.currRole = basedata;
-        this.getViewComponent().currRoleID=this.currRole._ID;
         let rolemap: cc.SpriteFrame = AssetManager.getInstance().getSpriteFromAtlas(basedata._ResourceName + '_big');
         let battle_arr: any = this.proxyData.SortBattleAttr([basedata._Power, basedata._Agility, basedata._PhysicalPower, basedata._Will]);
         let cook_arr: any = this.proxyData.sortCookingAttr([basedata._Cooking, basedata._Vigor, basedata._Savvy, basedata._Luck]);
@@ -260,7 +258,7 @@ export class RolePanelMediator extends Mediator
         if (basedata.HasEquip) this.getViewComponent().uploadEquipIcon(AssetManager.getInstance().getSpriteFromAtlas(basedata._Equip._Icon));
         else this.getViewComponent().hideEquipIcon();
 
-        if (basedata._Level == 20 || basedata._Level == 40) this.getViewComponent().showAdvanceButton();
+        if (basedata._Level == 20 || basedata._Level == 30 || basedata._Level == 40) this.getViewComponent().showAdvanceButton();
         else if (basedata._Level == 60) this.getViewComponent().hideUpgradeBtn();
         else this.getViewComponent().showLevelBtn();
         this.updateUpgradeInfo(_ID);
@@ -287,12 +285,12 @@ export class RolePanelMediator extends Mediator
      */
     updateAdvanceInfo()
     {
-        let vo: RoleAdvanceVo = this.proxyData.getAdvanceVo(Number(this.currRole._ID));
-        let prop:PropVo=this.dataManager.PropVoMap.get(vo._PropID);
+        let vo: RoleAdvanceVo = this.proxyData.getAdvanceVo(Number(this.getViewComponent().currRoleID));
+        let prop:PropVo=DataManager.getInstance().PropVoMap.get(vo._PropID);
         let actualPropNum: number = prop._Amount;
         let iconName = prop._ResourceName;
         let icon: cc.SpriteFrame = this.proxyData.getSpriteFromAtlas(iconName);
-        this.getViewComponent().setAdvanceTxt(String(this.proxyData.upgradeLevelCost(this.currRole._ID)), icon, actualPropNum + '/' + vo._PropNum);
+        this.getViewComponent().setAdvanceTxt(String(this.proxyData.upgradeLevelCost(this.getViewComponent().currRoleID)), icon, actualPropNum + '/' + vo._PropNum);
         this.showRoleDetailInfo(this.getViewComponent().currRoleID);
         if (actualPropNum < vo._PropNum) this.getViewComponent().disEnableAdvance();
         else this.getViewComponent().enableAdvance();
@@ -327,6 +325,7 @@ export class RolePanelMediator extends Mediator
         }
         else
         {
+
             this.getViewComponent().setUpgradeTxt(String(levelCost), String(fullCost));
             this.getViewComponent().upgradeBtnInteractable(true,true);
         }
@@ -335,7 +334,7 @@ export class RolePanelMediator extends Mediator
 
     showRequip()
     {
-        let equips: Array<EquipDataBase> = Array.from(this.dataManager.EquipTableMap.values());
+        let equips: Array<EquipDataBase> = Array.from(DataManager.getInstance().EquipTableMap.values());
         let voArr: Array<ItemVo> = new Array();
         let vo: ItemVo;
         let equip: EquipDataBase;
@@ -349,8 +348,7 @@ export class RolePanelMediator extends Mediator
             vo._value = 0;
             voArr.push(vo);
         }
-        this.getViewComponent().showEquipsInfo(voArr,this.currRole);
-        this.sendNotification(RoleInfoEvent.SHOW_EQUIP,[voArr,this.currRole]);
+        this.getViewComponent().showEquipsInfo(voArr);
     }
 
     /**
@@ -360,7 +358,7 @@ export class RolePanelMediator extends Mediator
     clickEquipHandle(e: cc.Event.EventCustom)
     {
         let _id: number = Number(e.getUserData());
-        let equip: EquipDataBase = this.dataManager.EquipTableMap.get(_id);
+        let equip: EquipDataBase = DataManager.getInstance().EquipTableMap.get(_id);
 
         if (this.getViewComponent().equipName.string == equip._Name)
         {
@@ -392,7 +390,7 @@ export class RolePanelMediator extends Mediator
         this.getViewComponent().uploadEquipIcon(_icon);
         this.currRole.addEquip(equip);
         this.showRoleDetailInfo(this.currRole._ID);
-        this.dataManager.changeRoleAttr(this.currRole._ID, this.currRole);
+        DataManager.getInstance().changeRoleAttr(this.currRole._ID, this.currRole);
     }
 
     /**
@@ -407,7 +405,7 @@ export class RolePanelMediator extends Mediator
         this.getViewComponent().equipDetailView.active = false;
         this.getViewComponent().uploadEquipIcon(AssetManager.getInstance().getSpriteFromAtlas(equip._Icon));
         this.showRoleDetailInfo(this.currRole._ID);
-        this.dataManager.changeRoleAttr(this.currRole._ID, this.currRole);
+        DataManager.getInstance().changeRoleAttr(this.currRole._ID, this.currRole);
     }
 
     /**
@@ -420,7 +418,7 @@ export class RolePanelMediator extends Mediator
         this.getViewComponent().hideEquipIcon();
         this.getViewComponent().equipDetailView.active = false;
         this.showRoleDetailInfo(this.currRole._ID);
-        this.dataManager.changeRoleAttr(this.currRole._ID, this.currRole);
+        DataManager.getInstance().changeRoleAttr(this.currRole._ID, this.currRole);
     }
 
     //#region 筛选功能

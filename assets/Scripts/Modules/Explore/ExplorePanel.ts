@@ -118,10 +118,10 @@ export default class ExplorePanel extends cc.Component {
     //#endregion
 
 
-    ExpleStart(id: number,status:number) {
+    ExpleStart(id: number) {
         this.ID = id;
-        //var ts=GameManager.TimeEvent(id.toString(),null,true)
-        if (status==2||status==3) {
+        console.log('当前任务ID：' + id);
+        if (GameManager.TimeEvent(id.toString(),null,true) >= 0) {
             this.Explore_ing.active = true;
             this.Registering(id);//探索进行界面
         } else {
@@ -212,7 +212,6 @@ export default class ExplorePanel extends cc.Component {
     * 普通按钮点击事件
     */
     private OnOrdinaryClick(data: any): any {
-        var Ep = <ExploreProxy>Facade.getInstance().retrieveProxy('ExploreProxy');
         switch (data.node.name) {
             case 'Explore_01':
             case 'Explore_02':
@@ -277,10 +276,10 @@ export default class ExplorePanel extends cc.Component {
                 var AJadeDisc = Number(this.Explore_BtnIng.getChildByName('SpeedUp ').getChildByName('Label').getComponent(cc.Label).string);
                 if (CurrencyManager.getInstance().Money >= AJadeDisc) {
                     CurrencyManager.getInstance().Money -= AJadeDisc;
-                    this.Close(false);   
+                    this.Close(false);
+                    GameStorage.setItem(this.ID.toString(), 0);//设置任务为已完成
                     this.Explore_BtnIng.active = false;
                     this.Explore_End.active = true;
-                    Ep.DiamondAcceleration(this.ID);//钻石加速
                 } else {
                     Log.ShowLog('玉璧不够');
                 }
@@ -301,12 +300,12 @@ export default class ExplorePanel extends cc.Component {
                     }
                 }
                 /**发送奖励 */
-                var self=this;
-                Ep.BonusLevels(this.ID,function(){self.Close();});
+                var Ep = <ExploreProxy>Facade.getInstance().retrieveProxy('ExploreProxy');
+                Ep.BonusLevels(this.ID);
                 /**解锁任务 */
-                //DataManager.getInstance().saveLevelData((this.ID + 1).toString(), -1);
-                //if (DataManager.getInstance().levelTableMap.get(this.ID)._UnlockID != 0) GameManager.TimeEvent(DataManager.getInstance().levelTableMap.get(this.ID)._UnlockID.toString(), -1,true);
-
+                DataManager.getInstance().saveLevelData((this.ID + 1).toString(), -1);
+                if (DataManager.getInstance().levelTableMap.get(this.ID)._UnlockID != 0) GameManager.TimeEvent(DataManager.getInstance().levelTableMap.get(this.ID)._UnlockID.toString(), -1,true);
+                this.Close();
                 break;
             default:
                 break;
@@ -319,7 +318,7 @@ export default class ExplorePanel extends cc.Component {
      */
     private Close(isOn:boolean=true) {
         var br = <ExploreView>Facade.getInstance().retrieveMediator(ExploreView.NAME);
-        br.viewSlect.Register();
+        br.viewSlect.Register(isOn);
         if (isOn){
             br.ExpleView(null);
             this.node.destroy();
@@ -509,7 +508,6 @@ export default class ExplorePanel extends cc.Component {
                     }
                     this.dic.forEach((value,key)=>{
                         key.getChildByName('label').getComponent(cc.Label).string='';
-                        console.log ( key.getChildByName('label').getComponent(cc.Label).string);
                     });
                     break;
                 case 'power':

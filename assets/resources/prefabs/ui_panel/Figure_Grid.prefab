@@ -988,7 +988,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 4,
+      "width": 64,
       "height": 30
     },
     "_anchorPoint": {
@@ -1034,8 +1034,8 @@
     "_srcBlendFactor": 1,
     "_dstBlendFactor": 771,
     "_useOriginalSize": false,
-    "_string": "",
-    "_N$string": "",
+    "_string": "已选择",
+    "_N$string": "已选择",
     "_fontSize": 20,
     "_lineHeight": 30,
     "_enableWrapText": true,

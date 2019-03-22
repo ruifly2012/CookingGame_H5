@@ -64,7 +64,7 @@ export class LobbyViewMediator extends Mediator
                 break;
             case GameCommand.UPDATE_COOKING_STATE:
                 this.checkCookingState(notification.getBody());
-                break;
+                break; 
             default:
                 break;
 
@@ -134,12 +134,12 @@ export class LobbyViewMediator extends Mediator
         this.getViewComponent().setMissionRed(currMission._Location);
     }
 
-    isOpen: boolean = false;
+    isOpen:boolean=false;
     MenuBtnHandle(arg: cc.Event.EventCustom): any
     {
         Log.Info(LobbyViewMediator.name, ' menu btn data: ', arg.getUserData());
-        if (this.isOpen) return;
-        this.isOpen = true;
+        if(this.isOpen) return ;
+        this.isOpen=true;
         switch (arg.getUserData())
         {
             case 'cookingBtn':
@@ -149,7 +149,6 @@ export class LobbyViewMediator extends Mediator
                 UIManager.getInstance().openUIPanel(UIPanelEnum.SelectPanel, this.LoadUIComplete.bind(this));
                 break;
             case 'roleBtn':
-                HttpRequest.getInstance().requestPost(RequestType.character_info, null);
                 UIManager.getInstance().openUIPanel(UIPanelEnum.RolePanel, this.LoadUIComplete.bind(this));
                 break;
             case 'bagBtn':
@@ -172,7 +171,7 @@ export class LobbyViewMediator extends Mediator
 
     LoadUIComplete(uipanelEnum: UIPanelEnum): any
     {
-        this.isOpen = false;
+        this.isOpen=false;
         //this.sendNotification(uipanelEnum);
     }
 

@@ -71,7 +71,7 @@ export class HttpRequest
         return HttpRequest.instance;
     }
 
-    private httpRequest: XMLHttpRequest;
+    public httpRequest: XMLHttpRequest;
     public static POST: string = 'POST';
     public static GET: string = 'GET';
     private authorization: string = '';
@@ -111,7 +111,7 @@ export class HttpRequest
      * @param _callback 
      * @param _data 
      */
-    requestPost(requestType: RequestType, _callback: any, _data?: any,isOnNull:boolean=true)
+    requestPost(requestType: RequestType, _callback: any, _data?: any)
     {
         this.httpRequest = new XMLHttpRequest();
         let self = this;
@@ -123,9 +123,9 @@ export class HttpRequest
                 if (this.status == 200)
                 {
                     console.log('------------',requestType,'---------');
-                    let obj: NetHead = Object.assign(new NetHead(),JSON.parse(this.responseText)); 
-                    console.dir(obj);
-                    self.message.onMessage(requestType, obj, _callback);
+                    console.log(this.responseText);
+                    let obj: NetHead = <NetHead>JSON.parse(this.responseText);
+                    if(obj.data!=null) self.message.onMessage(requestType, obj, _callback);
                 }
                 else
                 {
@@ -135,7 +135,7 @@ export class HttpRequest
             else
             {
                 //Facade.getInstance().sendNotification(LoginEvent.FAIL);
-                if(requestType==RequestType.login || requestType==RequestType.register) console.warn(StatusCode.GetCodeMsg(this.readyState));
+                //console.error(StatusCode.GetCodeMsg(this.readyState));
             }
         };
         this.httpRequest.open('POST', NetDefine.HTTP_IP + requestType, true);
@@ -149,7 +149,7 @@ export class HttpRequest
             default:
                 this.authorization = GameStorage.getItem(NetDefine.TOKEN);
                 this.httpRequest.setRequestHeader(NetDefine.AUTHORIZATION, this.authorization);
-                if (isOnNull)this.httpRequest.setRequestHeader(NetDefine.CONTENT_TYPE, ContentType.Application_Json);
+                this.httpRequest.setRequestHeader(NetDefine.CONTENT_TYPE, ContentType.Application_Json);
                 this.httpRequest.send(_data);
                 break;
         }
@@ -169,8 +169,9 @@ export class HttpRequest
                 if (this.status == 200)
                 {
                     console.log('------------',requestType,'---------');
-                    let obj: NetHead = Object.assign(new NetHead(),JSON.parse(this.responseText));
-                    console.dir(obj);
+                    console.log(this.responseText);
+                    let obj: NetHead = <NetHead>JSON.parse(this.responseText);
+                    
                     self.message.onMessage(requestType, obj, _callback);
                 }
                 else

@@ -1784,16 +1784,16 @@
     "transition": 1,
     "pressedColor": {
       "__type__": "cc.Color",
-      "r": 20,
-      "g": 33,
-      "b": 184,
+      "r": 255,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "hoverColor": {
       "__type__": "cc.Color",
-      "r": 181,
-      "g": 204,
-      "b": 15,
+      "r": 255,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "duration": 0.1,

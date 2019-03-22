@@ -48,7 +48,6 @@ export class NetMakeCookingNotify
     /** 1.已经完成 （领取了奖励） 2.未完成 （没领取奖励） */
     public progress:number=0;
     public playerId:number=0;
-    public visitorReawrd:any=null;
     public data:NetMakeCookingInfo[]=[];
 }
 

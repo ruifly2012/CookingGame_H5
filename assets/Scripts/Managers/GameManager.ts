@@ -41,7 +41,7 @@ export class GameManager
     public initMission()
     {
         ServerSimulator.getInstance().initServer();
-        //MissionManager.getInstance().initMission();
+        MissionManager.getInstance().initMission();
     }
 
     /**
@@ -121,8 +121,9 @@ export class GameManager
      */
     public GetOnHook(id: number, isOn: boolean = false): Array<OnHook>
     {
-        var hook: Array<OnHook> = new Array<OnHook>();
-        var ir = (id == 0 ? 10001 : id == 1 ? 20001 : id == 2 ? 30001 : id == 3 ? 40001 : 0);
+        var hook: Array<OnHook> = [];
+        var ir = (id == 1 ? 10001 : id == 2 ? 20001 : id == 3 ? 30001 : id == 4 ? 40001 : 0);
+        hook.push(DataManager.getInstance().OnhookMap.get(ir));
         DataManager.getInstance().OnhookMap.forEach((value, key) =>
         {
             if (key < ((id + 1) * 10000) && key > (id * 10000))

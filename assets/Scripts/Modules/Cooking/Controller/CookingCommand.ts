@@ -23,7 +23,6 @@ export class CookingCommand extends SimpleCommand
         Log.Info('----------', notification.getName(), '-----------');
         
         this.cookingProxy=<CookingProxy>Facade.getInstance().retrieveProxy(CookingProxy.name); 
-        //this.cookingProxy.initProxy();
         switch (notification.getBody()) {
             case GameCommand.COOKING_INIT:
                 //(<RoleProxy>Facade.getInstance().retrieveProxy(RoleProxy.name)).getOwnerRole();

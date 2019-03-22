@@ -1,4 +1,4 @@
-import { NetProps } from "./NetCommonality";
+import { NetProps } from "./NetMessage/NetCommonality";
 
 /**挂机面板交换数据脚本 */
 

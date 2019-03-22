@@ -26,9 +26,7 @@ export class Mission {
     public _RewardCoin: string = '';
     /** 奖励{propID:..,val:..} */
     public _RewardRes: Array<any> = new Array();
-    /** 当前进度 */
     public _CurrProgress: number = 0;
-    /** 总进度 */
     public _CompleteVal: number = 0;
     public _IsComplete: boolean = false;
 
