@@ -46,6 +46,9 @@ import { LevelTable } from "../Common/Tables/LevelTable";
 import { SkillTable } from "../Common/Tables/SkillTable";
 import { CarTable } from "../Common/Tables/CarTable";
 import { ITable } from "../Common/Tables/ITable";
+import Game from "../Game";
+import { HttpRequest } from "../NetWork/HttpRequest";
+import { RequestType } from "../NetWork/NetDefine";
 
 
 /**
@@ -111,6 +114,8 @@ export class DataManager
     {
         return this.propVoMap;
     }
+    public basePropVoMap: Map<number, PropVo> = new Map();
+
     /**根据前置id获取当前关卡数据 */
     private levelMap: Map<number, LevelDataBase> = new Map();
     /**根据前置id获取当前关卡数据 */
@@ -163,6 +168,7 @@ export class DataManager
     {
         return this.foodMaterialMap;
     }
+    public baseFoodMaterialMap:Map<number,FoodMaterialVo>=new Map();
 
     /** 访客数据 */
     private visitorMap: Map<number, VisitorDataBase> = new Map();
@@ -302,9 +308,9 @@ export class DataManager
         this.ParseTreasure();
 
 
-        this.updateRoleData();
-        this.updateMenuData();
-        this.updateBaseProp();
+        //this.updateRoleData();
+        //this.updateMenuData();
+        //this.updateBaseProp();
         //this.updateFoodMaterial();
         //this.updateMaterial();
         this.parseOnHook();
@@ -313,7 +319,7 @@ export class DataManager
         //Log.mapValsWithTable(this.PropVoMap);
     }
 
-    //#region 解析表数据 任务基本表、菜谱表、道具表
+    //#region 解析表数据 
 
     /**解析挂机表 */
     private parseOnHook()
@@ -385,7 +391,7 @@ export class DataManager
      */
     private parseRoleLevelAttribute()
     {
-        this.iTable= new RoleLevelTable();
+        this.iTable = new RoleLevelTable();
         this.upgradeAttrMap = this.iTable.parse(this.getDataWithName(TableName.CharacterLevelAttribute));
     }
 
@@ -429,14 +435,14 @@ export class DataManager
 
     private ParseCar()
     {
-        this.iTable  = new CarTable();
+        this.iTable = new CarTable();
         this.carMap = this.iTable.parse(this.getDataWithName(TableName.Car));
     }
 
     private ParseVisitor()
     {
         this.iTable = new VisitorTable();
-        this.visitorMap =  this.iTable.parse(this.getDataWithName(TableName.Visitor));
+        this.visitorMap = this.iTable.parse(this.getDataWithName(TableName.Visitor));
     }
 
     private ParseFoodMaterial()
@@ -487,7 +493,8 @@ export class DataManager
         }
         this.TableRoleMap.forEach((_role, _id) =>
         {
-            if (GameStorage.getItemJson(_id.toString()) != null)
+            if (GameStorage.getItemJson(_id.toString()) == 0) GameStorage.remove(_id.toString());
+            if (GameStorage.getItemJson(_id.toString()) != null && GameStorage.getItemJson(_id.toString()) != 0)
             {
                 role = Object.assign(new PresonDataBase(), GameStorage.getItemJson(_id.toString()));
                 if (GameStorage.getItemJson(_id.toString())._Equip != null) role._Equip = this.EquipTableMap.get(Number(GameStorage.getItemJson(_id.toString())._Equip._ID));
@@ -500,37 +507,52 @@ export class DataManager
 
     public updateMenuData()
     {
-        //从全局变量表里获取初始菜单
-        let menuOriginData: string[] = this.GlobalVarMap.get(3)._Value.split(',');
-        for (let i = 0; i < menuOriginData.length; i++)
+        if (Game.Instance.isConnectServer)
         {
-            const element = menuOriginData[i];
-            GameStorage.setItem(element, 1);
         }
-
-        let _map: Map<number, number> = GameStorage.getAllTypeStage(PropTypes.Menu);
-        _map.forEach((_num, _id) =>
+        else
         {
-            this.baseMenuMap.set(_id, this.TableMenuMap.get(_id));
-        });
+            //从全局变量表里获取初始菜单
+            let menuOriginData: string[] = this.GlobalVarMap.get(3)._Value.split(',');
+            for (let i = 0; i < menuOriginData.length; i++)
+            {
+                const element = menuOriginData[i];
+                GameStorage.setItem(element, 1);
+            }
+
+            let _map: Map<number, number> = GameStorage.getAllTypeStage(PropTypes.Menu);
+            _map.forEach((_num, _id) =>
+            {
+                this.baseMenuMap.set(_id, this.TableMenuMap.get(_id));
+            });
+        }
 
     }
 
     updateBaseProp()
     {
-        let prop_num: string[] = this.GlobalVarMap.get(6)._Value.split('|');
-        let _id: string = '';
-        let _num: number = 0;
-        for (let i = 0; i < prop_num.length; i++)
+
+        if (Game.Instance.isConnectServer)
         {
-            const element = prop_num[i];
-            _id = element.split(',')[0];
-            _num = Number(element.split(',')[1]);
-            if (GameStorage.getItem(_id) == null)
+            this.basePropVoMap.forEach((value, id) =>
             {
-                GameStorage.setItem(_id, _num);
-            }
+                GameStorage.setItem(id.toString(), value._Amount);
+                
+                if(value._Type==2)
+                {
+                    this.baseMenuMap.set(id,this.TableMenuMap.get(id));
+                }
+                if(value._Type==3)
+                {
+                    this.baseFoodMaterialMap.set(id,this.FoodMaterialMap.get(id));
+                }
+            });
         }
+        /* this.basePropVoMap=this.PropVoMap;
+        this.basePropVoMap.forEach((value,id)=>{
+            value._Amount=1000;
+            GameStorage.setItem(id.toString(), value._Amount);
+        }); */
     }
 
     public updateFoodMaterial()
@@ -630,6 +652,7 @@ export class DataManager
         let _role: PresonDataBase = this.TableRoleMap.get(_id);
         GameStorage.setItemJson(_id.toString(), _role);
         this.baseRoleMap.set(_id, _role);
+        HttpRequest.getInstance().requestPost(RequestType.character_addcharacter,null,'{"characterId":'+_id+'}');
     }
 
     /**

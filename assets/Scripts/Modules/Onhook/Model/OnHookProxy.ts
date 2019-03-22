@@ -11,6 +11,10 @@ import { RoleProxy } from "../../Role/Model/RoleProxy";
 import HookDataBase from "./HookDataBase";
 import { ServerSimulator } from "../../Missions/ServerSimulator";
 import { OnHookProtocal } from "../../Missions/MissionManager";
+import { HttpRequest } from "../../../NetWork/HttpRequest";
+import { RequestType } from "../../../NetWork/NetDefine";
+import { NetOnHookGoto, NetOnHookAward } from "../../../NetWork/NetMessage/NetOnHookInfo";
+import { NetHead } from "../../../NetWork/NetMessage/NetHead";
 
 /**
  * 挂机操作数据类
@@ -18,12 +22,14 @@ import { OnHookProtocal } from "../../Missions/MissionManager";
 export default class OnHookProxy extends Proxy {
     static NAME:string='OnHookProxy';
     HookData:Map<string,HookBase>=new Map();
+    
     constructor(data: any = null){
         super(OnHookProxy.NAME, data);
         for (let i = 1; i < 5; i++) {
             var look=DataManager.getInstance().OnhookMap.get(i * 10000 + 1);  
             var Hb=new HookBase(look._Name);
             this.HookData.set(look._Name,Hb);
+            GameStorage.remove(look._Name + TableName.OnHook);//删除计时任务
         }
     }
 
@@ -41,7 +47,7 @@ export default class OnHookProxy extends Proxy {
     StarPanel(name:string,arr:Array<FigureGridData>){
         this.HookData.get(name).HB._IDArray=new Array<number>();
         for (let j = 0; j < arr.length; j++) {
-            if (arr[j].PresonDate._CurrMission==name&&!this.HookData.get(name).contain){
+            if (arr[j].PresonDate._Name==name&&!this.HookData.get(name).contain){
                 this.HookData.get(name).HB._IDArray.push(arr[j].PresonDate._ID)
             }
         }
@@ -51,44 +57,54 @@ export default class OnHookProxy extends Proxy {
      * 开始挂机
      * @param name 当前挂机的地图的名字
      */
-    GotoOnHook(name: string) {
-        var arr = this.HookData.get(name).HB._IDArray;//FigureStatus
-        var roleproxy = <RoleProxy>Facade.getInstance().retrieveProxy('RoleProxy');
-        for (let i = 0; i < arr.length; i++) {//更改人物状态
-            roleproxy.GetRoleFromID(arr[i])._NowState = FigureStatus.OnHook;
-            roleproxy.GetRoleFromID(arr[i])._CurrMission = name;//or name+TableName.OnHook
-            GameStorage.setItemJson(arr[i].toString(), roleproxy.GetRoleFromID(arr[i]));
-        }
-        GameManager.TimeEvent(name + TableName.OnHook, this.HookData.get(name).HB._Time * 3600)//计算挂机时间
-        this.SetOnhooKPreson(name);//保存挂机数据
-        ServerSimulator.getInstance().updateOnHook(new OnHookProtocal(this.HookData.get(name).OnHookID,null));
-
+    GotoOnHook(name: string, callback: any = null) {
+        var self=this;
+        HttpRequest.getInstance().requestPost(RequestType.onhook_working, function () {
+            if (callback != null) callback();
+            var arr = self.HookData.get(name).HB._IDArray;//FigureStatus
+            var roleproxy = <RoleProxy>Facade.getInstance().retrieveProxy('RoleProxy');
+            for (let i = 0; i < arr.length; i++) {//更改人物状态
+                roleproxy.GetRoleFromID(arr[i])._NowState = FigureStatus.OnHook;
+                roleproxy.GetRoleFromID(arr[i])._Name = name;//or name+TableName.OnHook
+                GameStorage.setItemJson(arr[i].toString(), roleproxy.GetRoleFromID(arr[i]));
+            }
+            GameManager.TimeEvent(name + TableName.OnHook, self.HookData.get(name).HB._Time * 3600)//计算挂机时间
+            //self.SetOnhooKPreson(name);//保存挂机数据
+            ServerSimulator.getInstance().updateOnHook(new OnHookProtocal(self.HookData.get(name).OnHookID, null));
+        },JSON.stringify(new NetOnHookGoto(self.HookData.get(name).OnHookID,self.HookData.get(name).HB._IDArray,self.HookData.get(name).HB._Time,self.HookData.get(name).HB._Quadruple==true?2:1,self.HookData.get(name).HB._Roadster)));
     }
 
     /**完成结束挂机 */
-    EndOnHook(name: string) {
+    EndOnHook(name: string,callback:any=null) {
+        var self=this;
         var roleproxy = <RoleProxy>Facade.getInstance().retrieveProxy('RoleProxy');
-        for (let i = 0; i < roleproxy.roleList.length; i++) {
-            if (roleproxy.roleList[i]._CurrMission == name) {
-                DataManager.getInstance().changRoleStatus(roleproxy.roleList[i]._ID, FigureStatus.Leisure);
+        let fd:FormData=new FormData();
+        fd.append('onHookId',self.HookData.get(name).OnHookID.toString());
+        //
+        HttpRequest.getInstance().requestPost(RequestType.onhook_reward,function(){
+            for (let i = 0; i < roleproxy.roleList.length; i++) {
+                if (roleproxy.roleList[i]._Name == name) {
+                    DataManager.getInstance().changRoleStatus(roleproxy.roleList[i]._ID, FigureStatus.Leisure);
+                }
             }
-        }
-        this.HookData.get(name).AwardFood();//挂机奖励
-        this.HookData.get(name).HB._IDArray= new Array<number>();//删除挂机人物记录
-        this.HookData.get(name).total=0;//删除人物属性记录值
-        this.HookData.get(name).HB._Roadster=0;//删除当前车数据
-        GameStorage.remove(name + TableName.OnHook);//删除计时任务
-        GameStorage.remove(name);//删除地图人数记录
-        this.SetOnhooKPreson(name);
+            //self.HookData.get(name).AwardFood();//挂机奖励
+            self.HookData.get(name).HB._IDArray= new Array<number>();//删除挂机人物记录
+            self.HookData.get(name).total=0;//删除人物属性记录值
+            self.HookData.get(name).HB._Roadster=0;//删除当前车数据
+            GameStorage.remove(name + TableName.OnHook);//删除计时任务
+            GameStorage.remove(name);//删除地图人数记录
+            //self.SetOnhooKPreson(name);//保存挂机数据
+            if (callback!=null){callback();}
+        },fd,false);
     }
 
-    /**
-     *保存挂机数据
-     * @param id 面板名字
-     */
-    SetOnhooKPreson(name: string){
-       this.HookData.get(name).HB.SetOnHookData();
-    }
+    // /**
+    //  *保存挂机数据
+    //  * @param id 面板名字
+    //  */
+    // SetOnhooKPreson(name: string){
+    //    this.HookData.get(name).HB.SetOnHookData();
+    // }
 
     /**
      * 获取当前挂机面板拥有的人数
@@ -106,16 +122,30 @@ export default class OnHookProxy extends Proxy {
         }
     }
 
-    /**判断当前车是否可用 */
-    CarUsable(id:number):boolean{
-        var isOn=true;
-        this.HookData.forEach((value,key)=>{
-            var road=new HookDataBase(value.HB._Name);//从本地保存的数据中读取
-            if (id==road._Roadster&&DataManager.getInstance().CarMap.get(id)._Type==2){
-                isOn=false;
-            }
-        });
-        return isOn;
+    /**挂机加速 */
+    OnHookSpeedUp(id:number,callback:any=null){
+        let fd:FormData=new FormData();
+        fd.append('onHookId',id.toString());
+        HttpRequest.getInstance().requestPost(RequestType.onhook_acceleration,function(){
+            if (callback!=null){callback();}
+        },fd,false);
+    }
+
+    /**面板升级 */
+    OnHooklevelUp(id:number,callback:any=null){
+        let fd:FormData=new FormData();
+        fd.append('onHookId',id.toString());
+        HttpRequest.getInstance().requestPost(RequestType.onhook_upgrade,function(_netHead: NetHead){
+            if (callback!=null){callback(_netHead);}
+        },fd,false);
+    }
+
+    OnHookLevelUpCondition(id:number,callback:any=null){
+        let fd:FormData=new FormData();
+        fd.append('onHookId',id.toString());
+        HttpRequest.getInstance().requestPost(RequestType.onhook_levelUp,function(_netHead: NetHead){
+            if (callback!=null){callback(_netHead);}
+        },fd,false);
     }
 
 }

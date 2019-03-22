@@ -296,9 +296,9 @@ export default class CookingView extends cc.Component {
         Facade.getInstance().removeMediator(MenuSelectMediator.name);
         Facade.getInstance().removeMediator(BusinessMediator.name);
 
-        Facade.getInstance().registerCommand(GameCommand.COOKING_COMMAND, CookingCommand);
-        Facade.getInstance().registerCommand(GameCommand.MENU_SELECTED_COMMAND, MenuSelectCommand);
-        Facade.getInstance().registerCommand(GameCommand.BUSINESS_COMMAND,BusinessCommand);
+        Facade.getInstance().removeCommand(GameCommand.COOKING_COMMAND);
+        Facade.getInstance().removeCommand(GameCommand.MENU_SELECTED_COMMAND);
+        Facade.getInstance().removeCommand(GameCommand.BUSINESS_COMMAND);
 
         this.cookSelectPanel.getComponent(MenuSelectView).clearMenuItem();
         UIManager.getInstance().closeUIPanel(UIPanelEnum.CookingPanel);

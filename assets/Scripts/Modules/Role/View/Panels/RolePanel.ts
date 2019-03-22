@@ -32,6 +32,43 @@ const { ccclass, property } = cc._decorator;
 export default class RolePanel extends cc.Component
 {
     roleList: Array<PresonDataBase> = new Array();
+    @property(cc.Node)
+    stars: cc.Node = null;
+    @property(cc.Node)
+    itemContent: cc.Node = null;
+    @property(cc.Node)
+    battleAttr: cc.Node = null;
+    @property(cc.Node)
+    cookingAttr: cc.Node = null;
+    @property(cc.Node)
+    filterFrame: cc.Node = null;
+    @property(cc.Node)
+    advancePanel: cc.Node = null;
+    @property(cc.Label)
+    roleNameTxt: cc.Label = null;
+    @property(cc.Label)
+    levelTxt: cc.Label = null;
+    @property(cc.Label)
+    professionTxt: cc.Label = null;
+    @property(cc.Sprite)
+    roleBigMap: cc.Sprite = null;
+    @property(cc.Sprite)
+    skillSprite: cc.Sprite = null;
+
+    @property(cc.Node)
+    filterBtn: cc.Node = null;
+    @property(cc.Node)
+    taskBtn: cc.Node = null;
+    @property(cc.Node)
+    affirmBtn: cc.Node = null;
+    @property(cc.Node)
+    upgradeBtn: cc.Node = null;
+    @property(cc.Node)
+    upFullGradeBtn: cc.Node = null;
+    @property(cc.Node)
+    advanceBtn: cc.Node = null;
+    @property(cc.Node)
+    fullAdvanceTxt: cc.Node = null;
 
     @property(cc.Node)
     equipReload: cc.Node = null;
@@ -47,29 +84,6 @@ export default class RolePanel extends cc.Component
     equipContents: cc.Node = null;
     @property(cc.Node)
     equipDetailView: cc.Node = null;
-
-    stars: cc.Node = null;
-    itemContent: cc.Node = null;
-    battleAttr: cc.Node = null;
-    cookingAttr: cc.Node = null;
-    filterFrame: cc.Node = null;
-    advancePanel: cc.Node = null;
-
-    roleNameTxt: cc.Label = null;
-    levelTxt: cc.Label = null;
-    professionTxt: cc.Label = null;
-
-    roleBigMap: cc.Sprite = null;
-    skillSprite: cc.Sprite = null;
-
-
-    filterBtn: cc.Node = null;
-    taskBtn: cc.Node = null;
-    affirmBtn: cc.Node = null;
-    upgradeBtn: cc.Node = null;
-    upFullGradeBtn: cc.Node = null;
-    advanceBtn: cc.Node = null;
-    fullAdvanceTxt: cc.Node = null;
 
     public currRoleID: number = -1;
 
@@ -93,41 +107,13 @@ export default class RolePanel extends cc.Component
         let closeBtn = this.node.getChildByName('closeBtn');
         closeBtn.on(System_Event.MOUSE_CLICK, this.closePanel, this);
 
-        this.stars = ObjectTool.FindObjWithParent('bg/RoleInfoPanel/stars', this.node);
-        this.itemContent = ObjectTool.FindObjWithParent('bg/bottomPanel/roleView/content', this.node);
-        let rolePanel: cc.Node = ObjectTool.FindObjWithParent('bg/RoleInfoPanel', this.node);
-        this.battleAttr = ObjectTool.FindObjWithParent('right/battleAttr', rolePanel);
-        this.cookingAttr = ObjectTool.FindObjWithParent('right/cookingAttr', rolePanel);
-        this.filterFrame = ObjectTool.FindObjWithParent('bg/FilterFrame', this.node);
-        this.advancePanel = ObjectTool.FindObjWithParent('advancePanel', this.node);
-        this.advancePanel.active = false;
-
-        this.roleNameTxt = ObjectTool.FindObjWithParent('roleName', rolePanel).getComponent(cc.Label);
-        this.levelTxt = ObjectTool.FindObjWithParent('levelTxt', rolePanel).getComponent(cc.Label);
-        this.professionTxt = ObjectTool.FindObjWithParent('professionTxt', rolePanel).getComponent(cc.Label);
-
-        this.roleBigMap = ObjectTool.FindObjWithParent('roleBigMap', rolePanel).getComponent(cc.Sprite);
-        this.skillSprite = ObjectTool.FindObjWithParent('skillSprite', rolePanel).getComponent(cc.Sprite);
-
-        this.filterBtn = ObjectTool.FindObjWithParent('bg/filterBtn', this.node);
-        this.taskBtn = ObjectTool.FindObjWithParent('bg/taskBtn', this.node);
-        this.affirmBtn = ObjectTool.FindObjWithParent('bg/affirmBtn', this.node);
-        this.upgradeBtn = ObjectTool.FindObjWithParent('right/upgrade/upgradeBtn', rolePanel);
-        this.upFullGradeBtn = ObjectTool.FindObjWithParent('right/upgrade/upFullGradeBtn', rolePanel);
-        this.advanceBtn = ObjectTool.FindObjWithParent('right/upgrade/advanceBtn', rolePanel);
-        this.fullAdvanceTxt = ObjectTool.FindObjWithParent('right/upgrade/fullAdvance', rolePanel);
-
         this.fullAdvanceTxt.active = false;
         this.equipPanel.active = false;
         this.equipDetailView.active = false;
 
-        this.upgradeBtn.on(System_Event.TOUCH_START, (e: cc.Event.EventTouch) => { if (this.upgradeEvent != null) this.upgradeEvent(this.currRoleID); }, this);
-        this.upFullGradeBtn.on(System_Event.TOUCH_START, (e: cc.Event.EventTouch) => { if (this.fullUpgradeEvent != null) this.fullUpgradeEvent(this.currRoleID); }, this);
-        this.advanceBtn.on(System_Event.TOUCH_START, (e: cc.Event.EventTouch) =>
-        {
-            if (!this.advanceBtn.getComponent(cc.Button).interactable) return;
-            if (this.advanceEvent != null) this.advanceEvent(this.currRoleID);
-        }, this);
+        this.upgradeBtn.on(System_Event.TOUCH_START,this.upgradeLevelClick,this);
+        this.upFullGradeBtn.on(System_Event.TOUCH_START,this.upgradeFullLevelClick,this);
+        this.advanceBtn.on(System_Event.TOUCH_START,this.upgradeAdvanceLevelClick,this);
 
         this.filterBtn.on(System_Event.TOUCH_START, this.showFilter, this);
         this.filterFrame.active = false;
@@ -138,6 +124,25 @@ export default class RolePanel extends cc.Component
 
         this.equipReload.on(System_Event.TOUCH_START, this.reloadEquip, this);
         this.equipReload.getChildByName('equipIcon').active = false;
+    }
+
+    /** 升级事件 */
+    upgradeLevelClick(e: cc.Event.EventTouch)
+    {
+        this.node.dispatchEvent(new RoleInfoEvent(RoleInfoEvent.UPGRADE_LEVEL,true,this.currRoleID));
+    }
+
+    /** 升满级事件 */
+    upgradeFullLevelClick(e: cc.Event.EventTouch)
+    {
+        this.node.dispatchEvent(new RoleInfoEvent(RoleInfoEvent.UPGRADE_FULL_LEVEL,true,this.currRoleID));
+    }
+
+    /** 升阶事件 */
+    upgradeAdvanceLevelClick(e: cc.Event.EventTouch)
+    {
+        if(!this.advanceBtn.getComponent(cc.Button).interactable) return ;
+        this.node.dispatchEvent(new RoleInfoEvent(RoleInfoEvent.UPGRADE_ADVANCE_LEVEL,true,this.currRoleID));
     }
 
     reloadEquip()
@@ -156,6 +161,7 @@ export default class RolePanel extends cc.Component
     init(_list: Array<PresonDataBase>)
     {
         this.roleList = _list;
+        this.roleItemList=new Array();
         let prefab: cc.Prefab = AssetManager.getInstance().prefabMap.get('roleHeadItem');
         let data: PresonDataBase = null;
         for (let i = 0; i < this.roleList.length; i++)
@@ -185,6 +191,7 @@ export default class RolePanel extends cc.Component
         this.professionTxt.string = data.getProfession(Number(data._Profession));
         this.roleBigMap.spriteFrame = roleMap;
         this.skillSprite.spriteFrame = roleSkillIcon;
+        
 
         for (let i = 0; i < this.stars.childrenCount; i++)
         {
@@ -197,8 +204,13 @@ export default class RolePanel extends cc.Component
                 this.stars.getChildByName('star_' + (i + 1)).active = false;
             }
         }
+    }
 
-
+    showChangeAttribute(level: number, battleAttrArr: any, cookingAttrArr: any)
+    {
+        this.levelTxt.string = level + '级';
+        this.setBattleAttr(battleAttrArr);
+        this.setCookingAttr(cookingAttrArr);
     }
 
     /**
@@ -210,8 +222,6 @@ export default class RolePanel extends cc.Component
         let index: number = (<RoleItemView>data.target.getComponent(RoleItemView)).ID;
         this.roleNameTxt.string = this.roleList[data.target.name.substr(4, 1)]._Name;
         this.levelTxt.string = String(this.roleList[data.target.name.substr(4, 1)]._Level);
-
-        //Log.Info('role info: ',this.roleList[index]._Name,this.roleList[index]._Name);
     }
 
     /**
@@ -327,7 +337,7 @@ export default class RolePanel extends cc.Component
      * 显示装备列表
      * @param _equips 
      */
-    showEquipsInfo(_equips: Array<ItemVo>)
+    showEquipsInfo(_equips: Array<ItemVo>,_role:PresonDataBase)
     {
         this.equipContents.destroyAllChildren();
         let _equipPrefab: cc.Prefab = AssetManager.getInstance().prefabMap.get('equip_item');
@@ -344,7 +354,7 @@ export default class RolePanel extends cc.Component
     first: boolean = false;
     equipDetailShow(e: cc.Event.EventTouch)
     {
-        this.node.dispatchEvent(new RoleInfoEvent(RoleInfoEvent.CLICK_EQUIP,true,e.currentTarget.name));
+        this.node.dispatchEvent(new RoleInfoEvent(RoleInfoEvent.CLICK_EQUIP, true, e.currentTarget.name));
         /*this.equipStars.active = true;
         this.equipDescs.active = true;
         let _id: number = Number(e.currentTarget.name);
@@ -398,16 +408,15 @@ export default class RolePanel extends cc.Component
      * @param equip 装备item
      * @param isHas 
      */
-    setEquipDetail(equip:EquipDataBase,isHas:boolean=false)
+    setEquipDetail(equip: EquipDataBase, isHas: boolean = false)
     {
-        let node1:cc.Node=ObjectTool.FindObjWithParent('equipInfo/EquipDetial1', this.equipDetailView);
-        let node2:cc.Node=ObjectTool.FindObjWithParent('equipInfo/EquipDetial2', this.equipDetailView);
-        node1.getComponent(EquipmentDetail).setDataBase(equip,this.node);
-        if(isHas) node1.getComponent(EquipmentDetail).hasStateBtn();
+        let node1: cc.Node = ObjectTool.FindObjWithParent('equipInfo/EquipDetial1', this.equipDetailView);
+        let node2: cc.Node = ObjectTool.FindObjWithParent('equipInfo/EquipDetial2', this.equipDetailView);
+        node1.getComponent(EquipmentDetail).setDataBase(equip, this.node);
+        if (isHas) node1.getComponent(EquipmentDetail).hasStateBtn();
         else node1.getComponent(EquipmentDetail).unHasStateBtn();
-        node1.active=true;
-        node2.active=false;
-
+        node1.active = true;
+        node2.active = false;
     }
 
     /**
@@ -415,14 +424,14 @@ export default class RolePanel extends cc.Component
      * @param oldEquip 旧装备
      * @param newEquip 新装备
      */
-    comparenEquipDetail(oldEquip:EquipDataBase,newEquip:EquipDataBase)
+    comparenEquipDetail(oldEquip: EquipDataBase, newEquip: EquipDataBase)
     {
-        let node1:cc.Node=ObjectTool.FindObjWithParent('equipInfo/EquipDetial1', this.equipDetailView);
-        let node2:cc.Node=ObjectTool.FindObjWithParent('equipInfo/EquipDetial2', this.equipDetailView);
-        node2.active=true;
-        node1.getComponent(EquipmentDetail).setDataBase(oldEquip,this.node);
+        let node1: cc.Node = ObjectTool.FindObjWithParent('equipInfo/EquipDetial1', this.equipDetailView);
+        let node2: cc.Node = ObjectTool.FindObjWithParent('equipInfo/EquipDetial2', this.equipDetailView);
+        node2.active = true;
+        node1.getComponent(EquipmentDetail).setDataBase(oldEquip, this.node);
         node1.getComponent(EquipmentDetail).hideBtn();
-        node2.getComponent(EquipmentDetail).setDataBase(newEquip,this.node);
+        node2.getComponent(EquipmentDetail).setDataBase(newEquip, this.node);
         node2.getComponent(EquipmentDetail).showReplace();
     }
 
@@ -434,7 +443,7 @@ export default class RolePanel extends cc.Component
     {
         this.equipReload.getChildByName('equipIcon').active = true;
         this.equipReload.getChildByName('equipIcon').getComponent(cc.Sprite).spriteFrame = icon;
-       
+
     }
 
     /**
@@ -442,7 +451,7 @@ export default class RolePanel extends cc.Component
      */
     hideEquipIcon()
     {
-        this.equipReload.getChildByName('equipIcon').active=false;
+        this.equipReload.getChildByName('equipIcon').active = false;
     }
 
     hideUpgradeBtn()
@@ -499,6 +508,12 @@ export default class RolePanel extends cc.Component
         this.filterFrame.active = false;
     }
 
+    upgradeBtnInteractable(upgradeBtn: boolean, upFullGradeBtn: boolean)
+    {
+        this.upgradeBtn.getComponent(cc.Button).interactable = upgradeBtn;
+        this.upFullGradeBtn.getComponent(cc.Button).interactable = upFullGradeBtn;
+    }
+
     prefabComplete(prefab: cc.Prefab): any
     {
 
@@ -517,14 +532,14 @@ export default class RolePanel extends cc.Component
 
     closeDetailEquipPanel()
     {
-        this.equipDetailView.active=false;
+        this.equipDetailView.active = false;
     }
 
     closePanel(data: any)
     {
         Log.Info('close panel...');
         Facade.getInstance().removeMediator(RolePanelMediator.name);
-        Facade.getInstance().registerCommand(GameCommand.ROLE_COMMAND, RolePanelCommand);
+        Facade.getInstance().removeCommand(GameCommand.ROLE_COMMAND);
         UIManager.getInstance().closeUIPanel(UIPanelEnum.RolePanel);
         this.node.destroy();
     }

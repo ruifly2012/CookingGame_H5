@@ -4,7 +4,33 @@ import { Facade } from "../../MVC/Patterns/Facade/Facade";
 import { PropVo } from "../../Common/VO/PropVo";
 import { DataManager } from "../../Managers/DataManager";
 import { AssetManager } from "../../Managers/AssetManager";
+import { HttpRequest } from "../../NetWork/HttpRequest";
+import { RequestType } from "../../NetWork/NetDefine";
+import { DrawParam } from "../../NetWork/NetMessage/NetTreasureInfo";
 
+/**
+ * 奖池类型
+ */
+export enum TreasureType
+{
+    /** 金币池 */
+    Coin=1,
+    /** 钻石池 */
+    Diamonds=2
+}
+
+/**
+ * 宝箱接口
+ */
+export class TreausreBoxType
+{
+    /** 奖池类型 */
+    treaureType:TreasureType;
+    /** 单抽 */
+    singleDraw:number=0;
+    /** 多抽 */
+    MultiDraw:number=0;
+}
 
 /**
  * 宝箱抽奖管理（逻辑判断）
@@ -35,6 +61,7 @@ export class TreasureBoxManager
 
     init()
     {
+        this.currBoxList=new Array();
         this.boxProxy = <TreasureBoxProxy>Facade.getInstance().retrieveProxy(TreasureBoxProxy.name);
         this.currBoxList = this.boxProxy.TotalAwardMap.get(1);
         this.currBoxType = 1;
@@ -127,15 +154,33 @@ export class TreasureBoxManager
      * 
      * @param rollNum 抽奖次数
      */
-    startRoll(rollNum: number): Array<TreasureVo>
+    startRoll(rollNum: number,_callback:any)
     {
+        //HttpRequest.getInstance(RequestType.draw_treasure)
+        let param:DrawParam=new DrawParam();
+        if(rollNum==1) param.type=2;
+        else param.type=1;
+        param.drawType=this.currBoxType;
+        
+        let list:Array<TreasureVo>=new Array();
+        let prop:TreasureVo=null;
+        let self=this;
         this.awardProp = new Array();
+        HttpRequest.getInstance().requestPost(RequestType.draw_treasure,function(porpList:number[]){
+            for (let i = 0; i < porpList.length; i++) {
+                prop=self.currBoxList.find(o=>o._ID==porpList[i]);
+                list.push(prop);
+                self.awardProp.push(prop);
+            }
+            _callback(list);
+        },JSON.stringify(param));
+        
+        /* this.awardProp = new Array();
         for (let i = 0; i < rollNum; i++)
         {
             this.awardProp.push(this.roll());
         }
-
-        return this.awardProp;
+        return this.awardProp; */
     }
 
     /**
@@ -192,10 +237,10 @@ export class TreasureBoxManager
                     DataManager.getInstance().addMenu(element._PropID);
                     break;
                 case 3:
-                    DataManager.getInstance().addPropNum(element._PropID, Number(element._Amount));
+                    //DataManager.getInstance().addPropNum(element._PropID, Number(element._Amount));
                     break;
                 case 4:
-                    DataManager.getInstance().addPropNum(element._PropID, Number(element._Amount));
+                    //DataManager.getInstance().addPropNum(element._PropID, Number(element._Amount));
                     break;
                 case 5:
 
@@ -208,7 +253,8 @@ export class TreasureBoxManager
             }
         }
         this.awardProp = new Array();
-
+        HttpRequest.getInstance().requestPost(RequestType.props_info,null);
+        HttpRequest.getInstance().requestPost(RequestType.character_info,null);
     }
 
     /**

@@ -8,6 +8,12 @@ export default class EquipItem extends cc.Component
 {
     dataBase:EquipDataBase;
     itemVo:ItemVo;
+    
+    icon:cc.SpriteFrame=null;
+    name:string='';
+    amount:number=0;
+    star:number=0;
+    attributeList:Array<ItemVo>=new Array();
 
     setInfo(_itemVo:ItemVo)
     {

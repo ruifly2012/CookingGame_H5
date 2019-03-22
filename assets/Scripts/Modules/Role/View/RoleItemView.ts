@@ -41,15 +41,16 @@ export default class RoleItemView extends cc.Component {
         this.node.on(System_Event.TOUCH_START, this.downHandle, this);
         this.node.on(System_Event.TOUCH_END, this.endHandle, this);
         this.node.on(System_Event.TOUCH_CANCEL, this.endHandle, this);
+        this.node.on(System_Event.TOUCH_MOVE,this.moveHandle,this);
     }
+
     endHandle(data: cc.Event.EventTouch): any {
-       // clearTimeout(this.timeout);
-        if(this.clickHandle!=null) this.clickHandle(this.ID);
+        
         if(!this.ispress) 
         {
             console.log('click ');
+            if(this.clickHandle!=null) this.clickHandle(this.ID);
             if(this.clickEvent!=null) this.clickEvent(data);
-            //this.ispress=true;
         }
         clearTimeout(this.timeout);
         this.ispress=false;
@@ -59,9 +60,13 @@ export default class RoleItemView extends cc.Component {
         let self=this;
         this.timeout = setTimeout(() => {
             self.ispress=true;
-            if(self.pressHandle!=null) self.pressHandle(self.ID);
-            
+            if(self.pressHandle!=null) self.pressHandle(self.ID);    
         }, 500);
+    }
+
+    moveHandle(data:cc.Event.EventTouch)
+    {
+        if(data.getDelta().y>0.1) clearTimeout(this.timeout);
     }
 
     /**

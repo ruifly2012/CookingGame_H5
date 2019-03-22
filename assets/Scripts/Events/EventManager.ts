@@ -22,7 +22,6 @@ export default class EventManager extends cc.Component {
     start () {
     }
 
-
     /**
      * 发布事件
      * @param eventName 事件名

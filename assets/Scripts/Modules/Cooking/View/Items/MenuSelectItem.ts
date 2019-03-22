@@ -58,7 +58,6 @@ export default class MenuSelectItem extends cc.Component
     endHandle(data: cc.Event.EventTouch): any {
         if(!this.ispress) 
         {
-            console.log('click ');
             if(this.clickEvent!=null) this.clickEvent(this);
             //this.ispress=true;
         }

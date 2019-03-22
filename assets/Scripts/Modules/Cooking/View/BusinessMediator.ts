@@ -74,7 +74,7 @@ export class BusinessMediator extends Mediator {
             value.destroyAllChildren();
         });
         this.getViewComponent().node.active = true;
-        let _gradeIcon: cc.SpriteFrame = AssetManager.getInstance().attrMap.get(MenuGradeEnum.Normal);
+        let _gradeIcon: cc.SpriteFrame = AssetManager.getInstance().getSpriteFromAtlas(MenuGradeEnum.Normal);
         let menuIcon: cc.SpriteFrame = null;
         data.forEach((cookingVo, key) => {
             if (cookingVo == null || cookingVo == undefined) return;
@@ -82,7 +82,7 @@ export class BusinessMediator extends Mediator {
             cookingVo.menu.forEach((cookMenuVo, key2) => {
                 if (cookMenuVo == null || cookMenuVo == undefined) return;
                 menuIcon = AssetManager.getInstance().getSpriteFromAtlas(cookMenuVo._ResourceName);
-                _gradeIcon = AssetManager.getInstance().attrMap.get(cookMenuVo._Grade);
+                _gradeIcon = AssetManager.getInstance().getSpriteFromAtlas(cookMenuVo._Grade);
                 if (cookMenuVo._Amount == 0) return;
                 this.getViewComponent().instanceItem(key, cookMenuVo._Name, menuIcon, cookMenuVo._Amount, _gradeIcon, cookMenuVo._Price);
             });

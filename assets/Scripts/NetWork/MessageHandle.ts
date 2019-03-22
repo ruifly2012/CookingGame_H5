@@ -15,6 +15,7 @@ import { NetExplorePanel, NetExploreData } from "./NetMessage/NetExploreInfo";
 import { NetOnHookPanel, NetOnHookPanelInfo, NetCarinfo, Carinfo } from "./NetMessage/NetOnHookInfo";
 import { NetDrawOutInfo } from "./NetMessage/NetTreasureInfo";
 import { NetMissionInfo, NetMissionReward } from "./NetMessage/NetMissionInfo";
+import { LoginEvent } from "../Events/LoginEvent";
 
 
 export interface IMessage
@@ -81,7 +82,10 @@ export class MessageHandle implements IMessage
                 this.OnHookInfos(_netHead, _callback);
                 break;
             case RequestType.onhook_carinfos:
-                this.OnHookCarList(_netHead, _callback);
+                this.OnHookCarList(_netHead,_callback);
+                break;
+            case RequestType.onhook_upgrade:
+                if (_callback != null) _callback(_netHead);
                 break;
             case RequestType.treasure_info:
                 this.treasureInfoHandle(_netHead, _callback);
@@ -97,11 +101,16 @@ export class MessageHandle implements IMessage
                 if (_netHead.status != 200) return;
                 this.taskRewardHandle(_netHead,_callback);
                 break;
+            case RequestType.onhook_levelUp:
+                if (_callback != null) _callback(_netHead);
+                break;
             default:
                 if (_callback != null) _callback(_netHead.data);
                 break;
         }
     }
+
+
 
     /**挂机面板车信息 */
     OnHookCarList(_netHead: NetHead, _callback: any)
@@ -234,13 +243,15 @@ export class MessageHandle implements IMessage
         {
             propList.push(Object.assign(new NetProps(), _netHead.data[i]));
         }
-        if (_callback != null) _callback(propList);
+        
         this.updateNetProps(propList);
+        if (_callback != null) _callback(propList);
     }
 
     /**  */
     updateNetProps(propList: NetProps[])
     {
+        this.dataManager.basePropVoMap.clear();
         for (let i = 0; i < propList.length; i++)
         {
             const element = propList[i];
@@ -275,7 +286,7 @@ export class MessageHandle implements IMessage
         cookingNotify.goldCoinIncome = _netHead.data.goldCoinIncome;
         cookingNotify.startTime = _netHead.data.startTime;
         cookingNotify.remainTime = _netHead.data.remainTime;
-        cookingNotify.visitorReawrd = _netHead.data.visitorReawrd;
+        cookingNotify.visitorReawrd = _netHead.data.visitorReward;
         _netHead.data.data = eval(_netHead.data.data);
         for (let i = 0; i < _netHead.data.data.length; i++)
         {

@@ -14,6 +14,10 @@ import { GameCommand } from "../../Events/GameCommand";
 import { CurrencyManager } from "../../Managers/ CurrencyManager";
 import ExploreView from "./View/ExploreView";
 import { UIPanelEnum } from "../../Enums/UIPanelEnum";
+import { HttpRequest } from "../../NetWork/HttpRequest";
+import { RequestType } from "../../NetWork/NetDefine";
+import { NetExplorePanel } from "../../NetWork/NetMessage/NetExploreInfo";
+import TimingUnit from "./TimingUnit";
 
 const { ccclass, property } = cc._decorator;
 
@@ -24,106 +28,149 @@ export default class SlectPanel extends cc.Component {
     Tip: cc.Node = null;
     @property(cc.Node)
     LeveBtnArray: Array<cc.Node> = [];
-    NowMainLeveID: number = 10001;//当前主任务ID
-    NowSideQuestLeveID: number = 20001;//当前支线任务id
-    NowLeveId:number = null;;
+    NP:NetExplorePanel=new NetExplorePanel();
+    type:number = 0;
     @property(cc.Node)
     Expedition: cc.Node = null;
     @property(cc.Node)
     Content: cc.Node = null;
 
     onLoad() {
+        Facade.getInstance().registerMediator(new ExploreView(this));
         this.Expedition.getChildByName('OK').on('click', this.OnClickEvent, this);
         this.Expedition.parent.getChildByName('Close').on('click', this.OnClickEvent, this);
         this.Expedition.getChildByName('X').on('click', this.OnClickEvent, this);
+        for (let i = 0; i < this.LeveBtnArray.length; i++) {
+            this.LeveBtnArray[i].on('click', this.OnClickEvent, this);
+        }
         this.Register();
-        Facade.getInstance().registerMediator(new ExploreView(this));
+        
     }
  
     /**刷新当前界面信息*/
-    Register(ison: boolean = true) {
+    Register() {
+        console.log ('刷新关卡主界面');
         this.Expedition.parent.getChildByName('10001').getComponent(cc.Label).string = '金币：' + CurrencyManager.getInstance().Coin;
         this.Expedition.parent.getChildByName('10002').getComponent(cc.Label).string = '钻石：' + CurrencyManager.getInstance().Money;
-        if (ison) {
-            /**主线任务 */
-            this.NowMainLeveID = GameManager.GetNowLevel(false)//获取当前已解锁主关卡id
-            if (this.NowMainLeveID == null) {
-                this.LeveBtnArray[0].getChildByName('label').getComponent(cc.Label).string = '未解锁';
-            } else
-                if (this.NowMainLeveID == 0) {
-                    this.LeveBtnArray[0].getChildByName('label').getComponent(cc.Label).string = '已通关';
-                } else {
-                    this.LeveBtnArray[0].on('click', this.OnClickEvent, this);
-                    if (GameManager.TimeEvent(this.NowMainLeveID.toString(), null, true) > 0) {//如果正在探索 则开启一个倒计时循环
-                        this.schedule(function () {
-                            var sty = GameManager.TimeEvent(this.NowMainLeveID.toString(), null, true)
-                            this.LeveBtnArray[0].getChildByName('label').getComponent(cc.Label).string = (sty == 0 ? '探索完成' : sty == -1 ? '' : '正在探索\n') + (sty == 0 || sty == -1 ? '' : GameManager.GetTimeLeft2BySecond(sty));
-                        }, 1, GameManager.TimeEvent(this.NowMainLeveID.toString(), null, true), 0.01);
-                    } else if (GameManager.TimeEvent(this.NowMainLeveID.toString(), null, true) == 0) {
-                        this.LeveBtnArray[0].getChildByName('label').getComponent(cc.Label).string = '探索完成';
-                    } else {
-                        this.LeveBtnArray[0].getChildByName('label').getComponent(cc.Label).string = '';
-                        this.LeveBtnArray[0].getChildByName('hong').active = true;
-                        this.LeveBtnArray[0].getChildByName('jiantou').active = true;
-                    }
-                }
+        var self=this;
+        HttpRequest.getInstance().requestGet(RequestType.player_level_list, function(np:NetExplorePanel){
+            self.NP=np;
+             /**主线任务 */
+            self.LeveBtnArray[0].getChildByName('label').getComponent(cc.Label).string = np.data[0].levelStatus==0?'未解锁':np.data[0].levelStatus==3?'已完成':np.data[0].levelStatus==4?'已通关':'';
+            self.LeveBtnArray[0].getComponent(TimingUnit).cancel();
+            if (np.data[0].levelStatus == 2) {
+                self.LeveBtnArray[0].getComponent(TimingUnit).TimeUnit(np.data[0].levelId,np.data[0].waitTime);//开启一个计时
+            }else if(np.data[0].levelStatus == 1){
+                self.LeveBtnArray[0].getChildByName('label').getComponent(cc.Label).string = '';
+                self.LeveBtnArray[0].getChildByName('hong').active = true;
+                self.LeveBtnArray[0].getChildByName('jiantou').active = true;
+            }
 
             /**支线任务 */
-            this.NowSideQuestLeveID = GameManager.GetNowLevel(true);//获取当前已解锁支线关卡id
-            console.log('当前已解锁的主关卡id：' + this.NowMainLeveID+'当前已解锁的支线关卡id：' + this.NowSideQuestLeveID);
-            if (this.NowSideQuestLeveID == null) {
-                this.LeveBtnArray[1].getChildByName('label').getComponent(cc.Label).string = '未解锁';
-                this.LeveBtnArray[1].on('click', function(){Log.ShowLog('通关关卡主线6解锁');}, this);
-            } else
-                if (this.NowSideQuestLeveID == 0) {
-                    this.LeveBtnArray[1].getChildByName('label').getComponent(cc.Label).string = '已通关';
-                } else {
-                    this.LeveBtnArray[1].targetOff(this.LeveBtnArray[1]);
-                    this.LeveBtnArray[1].on('click', this.OnClickEvent, this);
-                    if (GameManager.TimeEvent(this.NowSideQuestLeveID.toString(), null, true) > 0) {//如果正在探索则开启一个倒计时循环
-                        this.schedule(function () {
-                            var str = GameManager.TimeEvent(this.NowSideQuestLeveID.toString(), null, true);
-                            this.LeveBtnArray[1].getChildByName('label').getComponent(cc.Label).string = (str == 0 ? '探索完成' : str == -1 ? '' : '正在探索\n') + (str == 0 || str == -1 ? '' : GameManager.GetTimeLeft2BySecond(str));
-                        }, 1, GameManager.TimeEvent(this.NowSideQuestLeveID.toString(), null, true), 0.01);
-                    } else if (GameManager.TimeEvent(this.NowSideQuestLeveID.toString(), null, true) == 0) {
-                        this.LeveBtnArray[1].getChildByName('label').getComponent(cc.Label).string = '探索完成';
-                    } else {
-                        this.LeveBtnArray[1].getChildByName('label').getComponent(cc.Label).string = '';
-                        this.LeveBtnArray[1].getChildByName('hong').active = true;
-                        this.LeveBtnArray[1].getChildByName('jiantou').active = true;
-                    }
+            var label_branch= self.LeveBtnArray[1].getChildByName('label').getComponent(cc.Label);
+            if(np.data.length>=2){
+                label_branch.string = np.data[1].levelStatus==0?'未解锁':np.data[1].levelStatus==3?'已完成':np.data[1].levelStatus==4?'已通关':'';
+                self.LeveBtnArray[1].getComponent(TimingUnit).cancel();
+                if(np.data[1].levelStatus == 2){
+                    self.LeveBtnArray[1].getComponent(TimingUnit).TimeUnit(np.data[1].levelId,np.data[1].waitTime);//开启一个计时
+                }else if(np.data[1].levelStatus == 1){
+                    self.LeveBtnArray[1].getChildByName('label').getComponent(cc.Label).string = '';
+                    self.LeveBtnArray[1].getChildByName('hong').active = true;
+                    self.LeveBtnArray[1].getChildByName('jiantou').active = true;
                 }
-        }
+            }else{
+                label_branch.string = '未解锁';
+            }
+        });
+        //#region 主线任务
+        // if (ison) {
+        //     /**主线任务 */
+        //     this.NowMainLeveID = GameManager.GetNowLevel(false)//获取当前已解锁主关卡id
+        //     if (this.NowMainLeveID == null) {
+        //         this.LeveBtnArray[0].getChildByName('label').getComponent(cc.Label).string = '未解锁';
+        //     } else
+        //         if (this.NowMainLeveID == 0) {
+        //             this.LeveBtnArray[0].getChildByName('label').getComponent(cc.Label).string = '已通关';
+        //         } else {
+        //             this.LeveBtnArray[0].on('click', this.OnClickEvent, this);
+        //             if (GameManager.TimeEvent(this.NowMainLeveID.toString(), null, true) > 0) {//如果正在探索 则开启一个倒计时循环
+        //                 this.schedule(function () {
+        //                     var sty = GameManager.TimeEvent(this.NowMainLeveID.toString(), null, true)
+        //                     this.LeveBtnArray[0].getChildByName('label').getComponent(cc.Label).string = (sty == 0 ? '探索完成' : sty == -1 ? '' : '正在探索\n') + (sty == 0 || sty == -1 ? '' : GameManager.GetTimeLeft2BySecond(sty));
+        //                 }, 1, GameManager.TimeEvent(this.NowMainLeveID.toString(), null, true), 0.01);
+        //             } else if (GameManager.TimeEvent(this.NowMainLeveID.toString(), null, true) == 0) {
+        //                 this.LeveBtnArray[0].getChildByName('label').getComponent(cc.Label).string = '探索完成';
+        //             } else {
+        //                 this.LeveBtnArray[0].getChildByName('label').getComponent(cc.Label).string = '';
+        //                 this.LeveBtnArray[0].getChildByName('hong').active = true;
+        //                 this.LeveBtnArray[0].getChildByName('jiantou').active = true;
+        //             }
+        //         }
+        //#endregion
+        //#region 支线任务
+        //     /**支线任务 */
+        //      id_branch  = GameManager.GetNowLevel(true);//获取当前已解锁支线关卡id
+        //     console.log('当前已解锁的主关卡id：' + this.NowMainLeveID + '当前已解锁的支线关卡id：' +  id_branch );
+        //     if ( id_branch  == null) {
+        //         
+        //     } else
+        //         if ( id_branch  == 0) {
+        //             this.LeveBtnArray[1].getChildByName('label').getComponent(cc.Label).string = '已通关';
+        //         } else {
+        //             this.LeveBtnArray[1].targetOff(this.LeveBtnArray[1]);
+        //             this.LeveBtnArray[1].on('click', this.OnClickEvent, this);
+        //             if (GameManager.TimeEvent( id_branch .toString(), null, true) > 0) {//如果正在探索则开启一个倒计时循环
+        //                 this.schedule(function () {
+        //                     var str = GameManager.TimeEvent( id_branch .toString(), null, true);
+        //                     this.LeveBtnArray[1].getChildByName('label').getComponent(cc.Label).string = (str == 0 ? '探索完成' : str == -1 ? '' : '正在探索\n') + (str == 0 || str == -1 ? '' : GameManager.GetTimeLeft2BySecond(str));
+        //                 }, 1, GameManager.TimeEvent( id_branch .toString(), null, true), 0.01);
+        //             } else if (GameManager.TimeEvent( id_branch .toString(), null, true) == 0) {
+        //                 this.LeveBtnArray[1].getChildByName('label').getComponent(cc.Label).string = '探索完成';
+        //             } else {
+        //                 this.LeveBtnArray[1].getChildByName('label').getComponent(cc.Label).string = '';
+        //                 this.LeveBtnArray[1].getChildByName('hong').active = true;
+        //                 this.LeveBtnArray[1].getChildByName('jiantou').active = true;
+        //             }
+        //         }
+        // }
+        //#endregion
     }
 
-    /**主线任务计时器 */
-    MainlineTaskTimer(){
 
-    }
 
     OnClickEvent(node: any) {
-        if(node.node.getChildByName('hong')!=null){ node.node.getChildByName('hong').active = false;};
+        if (node.node.getChildByName('hong') != null) { node.node.getChildByName('hong').active = false; };
+        var ks = <ExploreProxy>Facade.getInstance().retrieveProxy('ExploreProxy');
         switch (node.node.name) {
             case '1':
-                console.log('主线任务id：' + this.NowMainLeveID.toString() + '___主线任务状态：' + GameManager.TimeEvent(this.NowMainLeveID.toString(), null, true));
-                if (this.NowMainLeveID == 0) return;
-                if (GameManager.TimeEvent(this.NowMainLeveID.toString(), null, true) >= 0) {
-                    this.OpenExplorePanel(this.NowMainLeveID);
-                } else {
-                    this.GoQuest(this.NowMainLeveID);//传入主线ID
+                var id_principal = this.NP.data[0].levelId;
+                if (this.NP.data[0].levelStatus == 2 || this.NP.data[0].levelStatus == 3) {
+                    this.OpenExplorePanel(id_principal, this.NP.data[0].levelStatus);
+                } else if (this.NP.data[0].levelStatus == 4) {
+                    Log.ShowLog('已通关');
+                } else if (this.NP.data[0].levelStatus == 1) {
+                    this.type = 0;
+                    this.GoQuest(id_principal);//传入主线ID
                 }
                 break;
             case '2'://支线
-                console.log('支线任务ID：' + this.NowSideQuestLeveID + '___支线任务状态：' + GameManager.TimeEvent(this.NowSideQuestLeveID.toString(), null, true));
-                if (this.NowSideQuestLeveID == 0) return;
-                if (GameManager.TimeEvent(this.NowSideQuestLeveID.toString(), null, true) >= 0) {
-                    this.OpenExplorePanel(this.NowSideQuestLeveID);
-                } else {
-                    this.GoQuest(this.NowSideQuestLeveID);//传入支线线ID
+                if (this.NP.data.length < 2) return;
+                var id_branch = this.NP.data[1].levelId;
+                if (this.NP.data[1].levelStatus == 2 || this.NP.data[1].levelStatus == 3) {
+                    this.OpenExplorePanel(id_branch, this.NP.data[1].levelStatus);
+                }
+                else if (this.NP.data[1].levelStatus == 0) {
+                    Log.ShowLog('通关关卡主线6解锁');
+                } else if (this.NP.data[1].levelStatus == 4) {
+                    Log.ShowLog('已通关');
+                }
+                else if (this.NP.data[1].levelStatus == 1) {
+                    this.type = 1;
+                    this.GoQuest(id_branch);//传入支线线ID
                 }
                 break;
             case 'OK':
-                this.OpenExplorePanel(this.NowLeveId);
+                this.OpenExplorePanel(this.NP.data[this.type].levelId, this.NP.data[this.type].levelStatus);
                 break;
             case 'X':
                 this.Expedition.active = false;
@@ -131,7 +178,7 @@ export default class SlectPanel extends cc.Component {
                 break;
             case 'Close':
                 this.node.destroy();
-                Facade.getInstance().sendNotification(GameCommand.PANEL_CLOSE,UIPanelEnum.SelectPanel);
+                Facade.getInstance().sendNotification(GameCommand.PANEL_CLOSE, UIPanelEnum.SelectPanel);
                 Facade.getInstance().removeMediator(ExploreView.NAME);
                 break;
         }
@@ -140,12 +187,12 @@ export default class SlectPanel extends cc.Component {
     /**
      * 进入探索选择界面，
      */
-    OpenExplorePanel(id:number){
+    OpenExplorePanel(id:number,status:number){
         this.Expedition.active = false;
         this.Content.destroyAllChildren();
         ResourceManager.getInstance().loadResources(ConfigurationInformation.ExplorPanel_ExplorePanel_Prefab, cc.Prefab, function (Prefab) {
            var obj= ObjectTool.instanceWithPrefab('ExplorePanel', Prefab, <cc.Node>cc.find('Canvas/Main Camera'));
-           obj.getComponent(ExplorePanel).ExpleStart(Number(id));
+           obj.getComponent(ExplorePanel).ExpleStart(Number(id),status);
            var br= <ExploreView>Facade.getInstance().retrieveMediator('ExploreView');
            br.ExpleView(obj.getComponent(ExplorePanel));
         })
@@ -157,7 +204,6 @@ export default class SlectPanel extends cc.Component {
      * @param id 任务ID
      */
     GoQuest(id: number) {
-        this.NowLeveId=id;
         this.Expedition.active = true;
         var levedata = DataManager.getInstance().levelTableMap.get(id);
         this.Expedition.getChildByName('Tip_0').getComponent(cc.Label).string = levedata._Name;

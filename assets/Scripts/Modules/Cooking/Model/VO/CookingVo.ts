@@ -20,6 +20,10 @@ export class CookingVo {
     allMenuAmount:number=0;
     
     private acutalMenuList:Array<CookMenuVo>=new Array();
+    public set MenuList(list:Array<CookMenuVo>)
+    {
+        this.acutalMenuList=list;
+    }
     /** 实际做菜列表，数组不为空，menu数组可能存在空元素 */
     public get MenuList():Array<CookMenuVo>
     {
@@ -30,6 +34,17 @@ export class CookingVo {
 
     public constructor(_id:number) {
         this.ID=_id;
+    }
+
+    setRoleMenu(role:PresonDataBase,_menu:CookMenuVo,price:number,time:number,amount:number)
+    {
+        this.role=role;
+        this.menu.push(_menu);
+        this.MenuList.push(_menu);
+        this.price=price;
+        this.time=time;
+        this.allMenuAmount+=amount;
+
     }
 
     /**
@@ -55,7 +70,7 @@ export class CookingVo {
         if (this.menu[_location] != null) {
             this.clearTheMenu(_location);
         }
-        console.log('上架菜',_menu._Name);
+        //console.log('上架菜',_menu._Name);
         this.acutalMenuList.push(_menu);
         this.menu[_location] = _menu;
     }
@@ -156,7 +171,7 @@ export class CookingVo {
      * 清除人物
      */
     public clearRole() {
-        console.info('清除人物', this.role._Name);
+        //console.info('清除人物', this.role._Name);
         this.clearAllMenu();
         let id:number=this.role._ID;
         this.role = null;
@@ -173,7 +188,7 @@ export class CookingVo {
             console.info('the ' + _location + ' menu is null ,' + this.menu[_location]);
             return ;
         }
-        console.log('清除指定位置的菜'+this.menu[_location]._Name);
+        //console.log('清除指定位置的菜'+this.menu[_location]._Name);
         //这个脚本要放在这里吗 
         this.resetFoodMaterial(this.menu[_location]);
         let id:number=this.menu[_location]._ID;
@@ -200,7 +215,7 @@ export class CookingVo {
      */
     resetFoodMaterial(_menu: CookMenuVo) {
         let proxy: MenuProxy = <MenuProxy>Facade.getInstance().retrieveProxy(MenuProxy.name);
-        console.log('下架菜的时候，食材数量要增加回去'+_menu._Name);
+        //console.log('下架菜的时候，食材数量要增加回去'+_menu._Name);
         _menu._FoodMaterialMap.forEach((_materialVal, _id) => {
             proxy.getFoodMaterial(_id).Amount += _menu._Amount * _materialVal;
         });

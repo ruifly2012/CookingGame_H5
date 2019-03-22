@@ -12,6 +12,8 @@ import { DataManager } from "../../Managers/DataManager";
 import { TreasureVo } from "../../Common/VO/TreasureVo";
 import { CurrencyManager } from "../../Managers/ CurrencyManager";
 import NotificationView from "../../Common/NotificationView";
+import { TreasureCommand } from "./TreasureCommand";
+import { GameCommand } from "../../Events/GameCommand";
 
 const { ccclass, property } = cc._decorator;
 
@@ -61,6 +63,9 @@ export default class TreasureBoxView extends cc.Component
     onLoad() 
     {
         Facade.getInstance().registerMediator(new TreasureBoxMediator(this));
+        Facade.getInstance().registerCommand(GameCommand.TREASURE_COMMAND,TreasureCommand);
+        Facade.getInstance().sendNotification(GameCommand.TREASURE_COMMAND);
+
         this.prevBtn.on(System_Event.TOUCH_START, this.clickHandle, this);
         this.nextBtn.on(System_Event.TOUCH_START, this.clickHandle, this);
         this.collectBtn.on(System_Event.TOUCH_START, this.showCollectContent, this);
@@ -361,6 +366,7 @@ export default class TreasureBoxView extends cc.Component
     closePanel()
     {
         Facade.getInstance().removeMediator(TreasureBoxMediator.name);
+        Facade.getInstance().removeCommand(GameCommand.TREASURE_COMMAND);
         UIManager.getInstance().closeUIPanel(UIPanelEnum.TreasureBox);
         this.node.destroy();
     }

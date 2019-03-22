@@ -118,10 +118,10 @@ export default class ExplorePanel extends cc.Component {
     //#endregion
 
 
-    ExpleStart(id: number) {
+    ExpleStart(id: number,status:number) {
         this.ID = id;
-        console.log('当前任务ID：' + id);
-        if (GameManager.TimeEvent(id.toString(),null,true) >= 0) {
+        //var ts=GameManager.TimeEvent(id.toString(),null,true)
+        if (status==2||status==3) {
             this.Explore_ing.active = true;
             this.Registering(id);//探索进行界面
         } else {
@@ -212,6 +212,7 @@ export default class ExplorePanel extends cc.Component {
     * 普通按钮点击事件
     */
     private OnOrdinaryClick(data: any): any {
+        var Ep = <ExploreProxy>Facade.getInstance().retrieveProxy('ExploreProxy');
         switch (data.node.name) {
             case 'Explore_01':
             case 'Explore_02':
@@ -235,18 +236,19 @@ export default class ExplorePanel extends cc.Component {
                 break;
             case 'explore'://探索按钮
                 if (this.ForceStatistics()) {
+                    var ks=<ExploreProxy>Facade.getInstance().retrieveProxy('ExploreProxy');
                     this.Explore_choice.active = false;
                     this.Explore_ing.active = true;
-                    GameManager.TimeEvent(this.ID.toString(), DataManager.getInstance().levelTableMap.get(this.ID)._HangTime,true);
+                    ks.TimeEvent(this.ID, DataManager.getInstance().levelTableMap.get(this.ID)._HangTime);
                     this.Registering(this.ID);
                     var arr:Array<PresonDataBase>=[];
                     this.dic.forEach((value, key) => {
                         value.PresonDate._NowState = FigureStatus.Explore;
-                        value.PresonDate._CurrMission = this.ID.toString();
+                        value.PresonDate._Name = this.ID.toString();
                         arr.push(value.PresonDate);
                         GameStorage.setItemJson(value.PresonDate._ID.toString(), value.PresonDate);
                     });
-                    var ks=<ExploreProxy>Facade.getInstance().retrieveProxy('ExploreProxy');
+                    
                     ks.PeopleAndTasks(arr,this.ID)
                 } else {
                     Log.ShowLog('探索条件不满足');
@@ -276,10 +278,10 @@ export default class ExplorePanel extends cc.Component {
                 var AJadeDisc = Number(this.Explore_BtnIng.getChildByName('SpeedUp ').getChildByName('Label').getComponent(cc.Label).string);
                 if (CurrencyManager.getInstance().Money >= AJadeDisc) {
                     CurrencyManager.getInstance().Money -= AJadeDisc;
-                    this.Close(false);
-                    GameStorage.setItem(this.ID.toString(), 0);//设置任务为已完成
+                    this.Close(false);   
                     this.Explore_BtnIng.active = false;
                     this.Explore_End.active = true;
+                    Ep.DiamondAcceleration(this.ID);//钻石加速
                 } else {
                     Log.ShowLog('玉璧不够');
                 }
@@ -293,19 +295,19 @@ export default class ExplorePanel extends cc.Component {
                 }
                 var role = <RoleProxy>Facade.getInstance().retrieveProxy('RoleProxy');
                 for (let index = 0; index < role.roleList.length; index++) {
-                    if (role.roleList[index]._CurrMission == this.ID.toString()) {
+                    if (role.roleList[index]._Name == this.ID.toString()) {
                         role.roleList[index]._NowState = FigureStatus.Leisure;
                         role.roleList[index]._CurrMission = null;
                         GameStorage.setItemJson(role.roleList[index]._ID.toString(), role.roleList[index]);
                     }
                 }
                 /**发送奖励 */
-                var Ep = <ExploreProxy>Facade.getInstance().retrieveProxy('ExploreProxy');
-                Ep.BonusLevels(this.ID);
+                var self=this;
+                Ep.BonusLevels(this.ID,function(){self.Close();});
                 /**解锁任务 */
-                DataManager.getInstance().saveLevelData((this.ID + 1).toString(), -1);
-                if (DataManager.getInstance().levelTableMap.get(this.ID)._UnlockID != 0) GameManager.TimeEvent(DataManager.getInstance().levelTableMap.get(this.ID)._UnlockID.toString(), -1,true);
-                this.Close();
+                //DataManager.getInstance().saveLevelData((this.ID + 1).toString(), -1);
+                //if (DataManager.getInstance().levelTableMap.get(this.ID)._UnlockID != 0) GameManager.TimeEvent(DataManager.getInstance().levelTableMap.get(this.ID)._UnlockID.toString(), -1,true);
+
                 break;
             default:
                 break;
@@ -318,11 +320,11 @@ export default class ExplorePanel extends cc.Component {
      */
     private Close(isOn:boolean=true) {
         var br = <ExploreView>Facade.getInstance().retrieveMediator(ExploreView.NAME);
-        br.viewSlect.Register(isOn);
+        br.viewSlect.Register();
         if (isOn){
             br.ExpleView(null);
             this.node.destroy();
-        }      
+        }
     }
 
     /**探索界面人物按钮点击事件 */
@@ -380,7 +382,7 @@ export default class ExplorePanel extends cc.Component {
         var bs=(maps.has(str)?maps.get(str):0)
         return bs;
     }
-    /**战力统计 */
+    /**战力统计，包括判断现在数值是否满足条件 */
     private ForceStatistics(): boolean {
         if (this.NowAttribute!=null)this.SelectiveValue(this.NowAttribute.name);
         var powerValue: number = 0; var agileValue: number = 0; var bodyValue: number = 0; var willValue: number = 0;//基础属性
@@ -427,6 +429,7 @@ export default class ExplorePanel extends cc.Component {
         this.Power.string = powerValue.toString(); this.Agile.string = agileValue.toString(); this.Body.string = bodyValue.toString(); this.Will.string = willValue.toString();
         var leveldatabase = DataManager.getInstance().levelTableMap.get(this.ID);
         var IDArray: Array<boolean> = [];
+        /**是佛满足条件的UI文字颜色变化 */
         leveldatabase._ConditionMap.forEach((value, key) => {
             switch (key) {
                 case 1:
@@ -507,6 +510,7 @@ export default class ExplorePanel extends cc.Component {
                     }
                     this.dic.forEach((value,key)=>{
                         key.getChildByName('label').getComponent(cc.Label).string='';
+                        console.log ( key.getChildByName('label').getComponent(cc.Label).string);
                     });
                     break;
                 case 'power':
@@ -649,19 +653,20 @@ export default class ExplorePanel extends cc.Component {
         //按钮事件注册
         this.Explore_End.on('click', this.OnOrdinaryClick, this);
         this.X_2.on('click', this.OnOrdinaryClick, this);
+        var ks=<ExploreProxy>Facade.getInstance().retrieveProxy('ExploreProxy');
         //探索进行中
-        if (GameManager.TimeEvent(id.toString(),null,true) > 0) {
+        if (ks.TimeEvent(id,null) > 0) {
             this.Explore_BtnIng.active = true;
             this.Explore_BtnIng.getChildByName('SpeedUp ').on('click', this.OnOrdinaryClick, this)
             this.schedule(function () {
-                if (GameManager.TimeEvent(id.toString(),null,true) == 0) {
+                if (ks.TimeEvent(id,null) == 0) {
                     this.Explore_BtnIng.active = false;
                     this.Explore_End.active = true;
                 } else {
-                    this.ExploreBtnTimeLabel.string = GameManager.GetTimeLeft2BySecond(GameManager.TimeEvent(id.toString(),null,true));
-                    this.Explore_BtnIng.getChildByName('SpeedUp ').getChildByName('Label').getComponent(cc.Label).string = Math.ceil(GameManager.TimeEvent(id.toString(),null,true) / Number(DataManager.getInstance().GlobaVar.get(1)._Value));
+                    this.ExploreBtnTimeLabel.string = GameManager.GetTimeLeft2BySecond(ks.TimeEvent(id,null));
+                    this.Explore_BtnIng.getChildByName('SpeedUp ').getChildByName('Label').getComponent(cc.Label).string = Math.ceil(ks.TimeEvent(id,null) / Number(DataManager.getInstance().GlobaVar.get(1)._Value));
                 }
-            }, 1, GameManager.TimeEvent(id.toString(),null,true), 0.01);
+            }, 1, ks.TimeEvent(id,null), 0.01);
         } else {//或者探索已经结束
             this.Explore_BtnIng.active = false;
             this.Explore_End.active = true;

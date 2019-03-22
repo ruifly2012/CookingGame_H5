@@ -36,7 +36,7 @@ export class NetRoleInfo
     /*** 幸运*/
     public luck: number = 0;
     /*** 人物当前状态 0、空闲  1、做菜中  2、探索中  3、冒险中 */
-    public characterState: number = 0;
+    public characterStatus: number = 0;
 
     public constructor(){
 

@@ -11,7 +11,8 @@
   "appSecret": "",
   "encryptJs": true,
   "excludeScenes": [
-    "f4addbd9-06f7-44e0-a6f2-9edbc04c505d"
+    "f4addbd9-06f7-44e0-a6f2-9edbc04c505d",
+    "a1f5c62b-82b2-4746-a6fa-6c535e32a341"
   ],
   "fb-instant-games": {},
   "includeAnySDK": false,
@@ -20,7 +21,7 @@
   "inlineSpriteFrames_native": true,
   "jailbreakPlatform": false,
   "md5Cache": false,
-  "mergeStartScene": false,
+  "mergeStartScene": true,
   "oauthLoginServer": "",
   "optimizeHotUpdate": true,
   "orientation": {
@@ -35,7 +36,7 @@
     "REMOTE_SERVER_ROOT": "",
     "orientation": "portrait"
   },
-  "startScene": "a1f5c62b-82b2-4746-a6fa-6c535e32a341",
+  "startScene": "c0db1819-2a44-4f2a-986c-d02d42722fb8",
   "title": "BaseFramework",
   "webOrientation": "portrait",
   "wechatgame": {

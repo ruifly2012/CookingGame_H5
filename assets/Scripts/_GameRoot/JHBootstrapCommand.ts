@@ -9,13 +9,8 @@ import { TreasureBoxProxy } from "../Modules/TreasureBoxs/TreasureBoxProxy";
 import { ResourceManager } from "../Managers/ResourceManager";
 import { GlobalPath } from "../Common/GlobalPath";
 import { UIPanelEnum } from "../Enums/UIPanelEnum";
-import { ServerSimulator } from "../Modules/Missions/ServerSimulator";
 import { ObjectTool } from "../Tools/ObjectTool";
 import { UIManager } from "../Managers/UIManager";
-import { CustomEventManager } from "../Events/CustomEventManager";
-import { EventType } from "../Events/EventType";
-import { LoginMediator } from "../Modules/Login/LoginMediator";
-import LoginView from "../Modules/Login/LoginView";
 import { HttpRequest } from "../NetWork/HttpRequest";
 
 export class JHBootstrapCommand extends SimpleCommand {
@@ -34,33 +29,33 @@ export class JHBootstrapCommand extends SimpleCommand {
     registerProxy()
     {
         Facade.getInstance().registerProxy(new RoleProxy());
-        Facade.getInstance().registerProxy(new CookingProxy());
         Facade.getInstance().registerProxy(new MenuProxy());
+        Facade.getInstance().registerProxy(new CookingProxy());
         Facade.getInstance().registerProxy(new TreasureBoxProxy());
     }
 
     loadLogin()
     {
-        ResourceManager.getInstance().loadResources(GlobalPath.UI_PANEL_DIR+UIPanelEnum.LoginPanel
-            ,cc.Prefab,function(obj:cc.Prefab){
-            if(obj!=null)
-            {
-                let _node:cc.Node=ObjectTool.instanceWithPrefab(obj.name,obj,UIManager.getInstance().uiRoot);
-                UIManager.getInstance().setUIPanel(UIPanelEnum.LoginPanel,_node);
-                Facade.getInstance().registerMediator(new LoginMediator(UIManager.getInstance().getUIPanel(UIPanelEnum.LoginPanel).getComponent(LoginView)));
-            }
-        });
-        ResourceManager.getInstance().loadResources(GlobalPath.UI_PANEL_DIR + UIPanelEnum.LoadingPanel, cc.Prefab, function (obj: cc.Prefab)
-        {
-            if (obj != null)
-            {
-                let _node: cc.Node = ObjectTool.instanceWithPrefab(obj.name, obj, UIManager.getInstance().uiRoot);
-                UIManager.getInstance().setUIPanel(UIPanelEnum.LoadingPanel, _node);
-                _node.active=false;
-            }
-        });
+        let UIPaths:UIPanelEnum[]=[UIPanelEnum.LoadingPanel,UIPanelEnum.LoginPanel,UIPanelEnum.LobbyPanel];
+        let self=this;
+        let nodeCompleteCount:number=0;
+        for (let i = 0; i < UIPaths.length; i++) {
+            let _node:cc.Node=null;
+            ResourceManager.getInstance().loadResources(GlobalPath.UI_PANEL_DIR+UIPaths[i],cc.Prefab,function(obj:cc.Prefab){
+                if(obj!=null)
+                {
+                    _node=ObjectTool.instanceWithPrefab(obj.name,obj,UIManager.getInstance().uiRoot);
+                    UIManager.getInstance().setUIPanel(UIPaths[i],_node);
+                    if(UIPaths[i]!=UIPanelEnum.LoginPanel) _node.active=false;
+                }
+            },function(_completeCount:Number,_totalCount:Number,_item:any){
+                if(_completeCount===_totalCount)
+                {
+                    nodeCompleteCount++;
+                }
+            });
+        }
+        GameManager.getInstance().InitConfig();
     }
-
-   
 
 }

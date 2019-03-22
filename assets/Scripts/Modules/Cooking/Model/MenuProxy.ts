@@ -22,9 +22,9 @@ import { MaterialDataBase } from "../../../Common/VO/RuneDataBase";
  */
 export class MenuProxy extends Proxy {
     cookMenuMap: Map<number, CookMenuVo> = new Map();
-    foodMateials: Array<FoodMaterialVo> = null;
+    foodMateials: Array<FoodMaterialVo> = new Array();
     originMaterialValue:Map<number,number>=new Map();
-
+    dataManager:DataManager=null;
 
     /**
     * 
@@ -32,14 +32,27 @@ export class MenuProxy extends Proxy {
     public constructor() {
         super(MenuProxy.name);
         //this.configCookMenu();
+        this.dataManager=DataManager.getInstance();
     }
 
     configCookMenu() {
-        this.cookMenuMap = DataManager.getInstance().baseMenuMap;
-        this.foodMateials = new Array();
+        this.cookMenuMap = DataManager.getInstance().TableMenuMap;
+        this.foodMateials =Array.from(DataManager.getInstance().FoodMaterialMap.values());
         let foodMataial: FoodMaterialVo = null;
-        DataManager.getInstance().PropVoMap.forEach((value, key) => {
-            if (String(key).substr(0, 2) == '30') {
+        this.originMaterialValue.clear();
+        this.foodMateials.forEach((material)=>{
+            if(this.dataManager.basePropVoMap.has(material.ID))
+            {
+                material.Amount=this.dataManager.basePropVoMap.get(material.ID)._Amount;
+            }
+            else
+            {
+                material.Amount=0;
+            }
+            this.originMaterialValue.set(material.ID,material.Amount);
+        });
+       /*  DataManager.getInstance().basePropVoMap.forEach((value, key) => {
+            if (value._Type==3) {
                 var obj = value;
                 foodMataial = new FoodMaterialVo();
                 foodMataial.ID = value._ID;
@@ -51,10 +64,7 @@ export class MenuProxy extends Proxy {
                 this.foodMateials.push(foodMataial);
                 this.originMaterialValue.set(foodMataial.ID,foodMataial.Amount);
             }
-        });
-
-        //console.dir(this.cookMenuMap.get(20001)['GradeNum']);
-        //this.typeSort(MenuTypeEnum.Drinks);   
+        }); */
     }
 
     getLocalData()
@@ -87,10 +97,11 @@ export class MenuProxy extends Proxy {
     
     updateFoodMaterial()
     {
-        this.foodMateials.forEach((material)=>{
+        
+        /* this.foodMateials.forEach((material)=>{
             if(Number(GameStorage.getItem(material.ID.toString())-this.originMaterialValue.get(material.ID))>0)
                 material.Amount+=Number(GameStorage.getItem(material.ID.toString()))-this.originMaterialValue.get(material.ID);
-        });
+        }); */
     }
 
     /**
@@ -109,15 +120,13 @@ export class MenuProxy extends Proxy {
 
     saveFoodMaterial()
     {
-        this.foodMateials.forEach((material)=>{
+        
+        /* this.foodMateials.forEach((material)=>{
             DataManager.getInstance().savePropNum(material.ID, Math.abs(material.Amount));
             this.originMaterialValue.set(material.ID,material.Amount);
-        });
+        }); */
     }
 
-    configFoodMaterial() {
-
-    }
 
     public getMenuItemPrefab(): cc.Prefab {
         let p: cc.Prefab = AssetManager.getInstance().prefabMap.get('menuSelectItem');

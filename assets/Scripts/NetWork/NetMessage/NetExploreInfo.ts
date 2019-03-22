@@ -62,7 +62,7 @@ export class NetExploreData{
     levelType:number;
     /**关卡id */
     levelId:number=0;
-    /**关卡状态 */
+    /**关卡状态 未解锁 0 、空闲中 1 、 探索中 2 、已完成 3 、已通关 4*/
     levelStatus:number=0;
     //updateDate:number=0;
     /**探险剩余时间 */

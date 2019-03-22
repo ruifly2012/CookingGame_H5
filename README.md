@@ -22,3 +22,7 @@ git commit -m '忘分支上添加内容，更改登录上的内容'
 git push origin dev 推送到分支dev
 
 git checkout master 切换到主分支
+
+如果你想以最快的方式查看所处分支与master的差异，那么可以在 URL 中的仓库名字后面输入 //compare/branch-name
+
+也许想看任意两个分支之间的差异，那么可以在 URL 输入 /compare/integration-branch...my-branch

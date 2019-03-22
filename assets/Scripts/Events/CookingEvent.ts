@@ -41,6 +41,8 @@ export class CookingEvent extends cc.Event.EventCustom {
     public static COOKING_START: string = 'cooking_start';
     /** 做菜中 */
     public static COOKING_ING: string = 'cooking_ing';
+    /** 钻石加速完成 */
+    public static SPPEE_UP_COOKING_END:string='diamond_sppeed_up_cooking_end';
     /** 完成做菜  */
     public static COOKING_END: string = 'cooking_end';
     /** 开始做菜后，通过该key保存做菜时间 */

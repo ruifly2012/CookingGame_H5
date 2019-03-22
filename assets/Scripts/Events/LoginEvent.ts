@@ -6,6 +6,8 @@ export class LoginEvent extends cc.Event.EventCustom
     public static USER_CONFIG:string='user_config';
     public static LOGIN:string='login';
     public static REGISTER:string='register';
+    public static SUCCESS:string='success';
+    public static FAIL:string='fail';
 
     /**
      * 自定义事件构造函数

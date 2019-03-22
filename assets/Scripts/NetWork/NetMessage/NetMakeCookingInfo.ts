@@ -78,3 +78,9 @@ export class VisitorInfo
         
     } 
 }
+
+export class NetCookingReward
+{
+    public rewards:number[]=[];
+    public visitorId:number=0;
+}

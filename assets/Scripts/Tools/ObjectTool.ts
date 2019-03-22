@@ -78,6 +78,7 @@ export class ObjectTool {
     public static instanceWithPrefab(_name:string,_prefab:cc.Prefab,_parent?:cc.Node,_pos:cc.Vec2=new cc.Vec2(0,0)):cc.Node
     {
         var _node=cc.instantiate(_prefab);
+        if(_node==null) console.error('the _prefab '+_name+',_prefab name:'+_prefab+' is null!!!');
         _node.name=_name;
         if(_parent!=null) _parent.addChild(_node);
         else cc.director.getScene().addChild(_node);
@@ -131,6 +132,22 @@ export class ObjectTool {
                 console.log('obj key:'+key+',value :'+element);
             }
         }
+    }
+
+    /**
+     * 解析{11:22,33:3333,444:4434}，类型的字符串为以逗号分开为key-value对的二维数组
+     * @param obj 
+     */
+    public static parseKeyValue(obj:string):any
+    {
+        obj=obj.replace('{','').replace('}','');
+        let keyValueLine:string[]=obj.split(',');
+        let arr:any=[];
+        for (let i = 0; i < keyValueLine.length; i++) {
+            const element = keyValueLine[i];
+            arr.push([element.split(':')[0],element.split(':')[1]]);
+        }
+        return arr;
     }
 
     // update (dt) {}

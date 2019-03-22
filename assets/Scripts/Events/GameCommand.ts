@@ -9,6 +9,7 @@ export class GameCommand {
     public static LOBBY_COMMAND: string = 'lobby_command';
     public static ROLE_COMMAND: string = 'role_command';
     public static COOKING_COMMAND: string = 'cooking_command';
+    public static TREASURE_COMMAND:string='treasure_command';
 
     /** 数据读取解析完成 */
     public static DATA_TABLE_COMPLETE: string = 'data_table_complete';

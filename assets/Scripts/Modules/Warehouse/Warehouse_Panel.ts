@@ -105,10 +105,12 @@ export default class Warehouse_Panel extends cc.Component {
         var foodarray:Array<FoodGrid>=[];
         ResourceManager.getInstance().loadResources(ConfigurationInformation.Warehouse_FoodGrid_Prefab,cc.Prefab,function(prefab){
             food.forEach((value,key)=>{
-                var grid: cc.Node = ObjectTool.instanceWithPrefab('food_' + key.toString(), prefab, cc.find('toggle2/scrollview/view/content', self.node));
-                grid.getComponent(FoodGrid).setData(PropMap.get(key)._Name,value.toString(),PropMap.get(key)._ResourceName,key);
-                grid.on('click',self.OnClickFoodEvent,self);
-                foodarray.push(grid.getComponent(FoodGrid));
+                if (value>0){
+                    var grid: cc.Node = ObjectTool.instanceWithPrefab('food_' + key.toString(), prefab, cc.find('toggle2/scrollview/view/content', self.node));
+                    grid.getComponent(FoodGrid).setData(PropMap.get(key)._Name,value.toString(),PropMap.get(key)._ResourceName,key);
+                    grid.on('click',self.OnClickFoodEvent,self);
+                    foodarray.push(grid.getComponent(FoodGrid));
+                }            
             });
             let foodstar =  foodarray.sort((a, b) => {
                 return b.id - a.id;
@@ -123,11 +125,13 @@ export default class Warehouse_Panel extends cc.Component {
         var materials = GameStorage.getAllTypeStage(PropTypes.Materials);
         var materialsarray:Array<FoodGrid>=[];
         ResourceManager.getInstance().loadResources(ConfigurationInformation.Warehouse_FoodGrid_Prefab, cc.Prefab, function (prefab) {
-            materials.forEach((value, key) => {             
-                var grid: cc.Node = ObjectTool.instanceWithPrefab('materials' + key.toString(), prefab, cc.find('toggle3/scrollview/view/content', self.node));
-                grid.getComponent(FoodGrid).setData(PropMap.get(key)._Name, value.toString(), PropMap.get(key)._ResourceName,key);
-                grid.on('click',self.OnClickMaterialsEvent,self);
-                materialsarray.push( grid.getComponent(FoodGrid));
+            materials.forEach((value, key) => {  
+                if (value>0){
+                    var grid: cc.Node = ObjectTool.instanceWithPrefab('materials' + key.toString(), prefab, cc.find('toggle3/scrollview/view/content', self.node));
+                    grid.getComponent(FoodGrid).setData(PropMap.get(key)._Name, value.toString(), PropMap.get(key)._ResourceName,key);
+                    grid.on('click',self.OnClickMaterialsEvent,self);
+                    materialsarray.push( grid.getComponent(FoodGrid));
+                }
             });
             let ml =  materialsarray.sort((a, b) => {
                 return b.id - a.id;

@@ -99,21 +99,14 @@ export class UIManager {
         }
         if (this.uiPanelMap.get(_uiPanel) != null) {
             this.currUIPanel = this.uiPanelMap.get(_uiPanel);
-            if (_uiPanel == UIPanelEnum.WarehousePanel || _uiPanel == UIPanelEnum.SelectPanel || _uiPanel==UIPanelEnum.OnHookPanel) {
-                this.uiPanelMap.delete(_uiPanel);
-                this.loadUIPanel(_uiPanel);
+            this.currUIPanel.active = true;
+            this.currUIPanel.setSiblingIndex(this.currUIPanel.parent.childrenCount - 1);
+            Facade.getInstance().sendNotification(_uiPanel);
+            if (typeof this.completeCB != 'undefined' && this.completeCB != null) {
+                
+                this.completeCB(_uiPanel);
+                this.completeCB = null;
             }
-            else {
-                this.currUIPanel.active = true;
-                this.currUIPanel.setSiblingIndex(this.currUIPanel.parent.childrenCount - 1);
-                Facade.getInstance().sendNotification(_uiPanel);
-                if (typeof this.completeCB != 'undefined' && this.completeCB != null) {
-                    
-                    this.completeCB(_uiPanel);
-                    this.completeCB = null;
-                }
-            }
-
         }
         else {
             this.loadUIPanel(_uiPanel);
@@ -124,6 +117,7 @@ export class UIManager {
     public setUIPanel(_uiPanel: UIPanelEnum,_panel:cc.Node)
     {
         this.uiPanelMap.set(_uiPanel,_panel);
+        //console.log(this.uiPanelMap.get(_uiPanel));
     }
 
     public getUIPanel(_uiPanel: UIPanelEnum): cc.Node {
@@ -131,6 +125,15 @@ export class UIManager {
             return this.uiPanelMap.get(_uiPanel);
         Log.Error('!!!!get the panel is null');
         return null;
+    }
+
+    public getUIComponent<T>(_uiPanel: UIPanelEnum,type:string):T
+    {
+        //console.log(this.uiPanelMap.get(_uiPanel));
+        if (this.uiPanelMap.get(_uiPanel) != null)
+        {
+            return  this.uiPanelMap.get(_uiPanel).getComponent(type);
+        }
     }
 
     hidePanel(uiPanelEnum:UIPanelEnum)
@@ -142,7 +145,7 @@ export class UIManager {
      * 关闭UI panel
      */
     public closeUIPanel(uiPanelEnum: UIPanelEnum) {
-        this.uiPanelMap.delete(uiPanelEnum);
+        if (this.uiPanelMap.get(uiPanelEnum)) this.uiPanelMap.delete(uiPanelEnum);
     }
 
     public OpenPopup(popupName: string) {
