@@ -436,6 +436,7 @@ export class CookingProxy extends Proxy
         let _amount: number = 0;
         this.cookingMap.forEach((cookvo, key) =>
         {
+            console.log(cookvo);
             _amount += cookvo.allMenuAmount;
         });
         return _amount;

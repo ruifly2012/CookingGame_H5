@@ -16,6 +16,7 @@ import { NetOnHookPanel, NetOnHookPanelInfo, NetCarinfo, Carinfo } from "./NetMe
 import { NetDrawOutInfo } from "./NetMessage/NetTreasureInfo";
 import { NetMissionInfo, NetMissionReward } from "./NetMessage/NetMissionInfo";
 import { LoginEvent } from "../Events/LoginEvent";
+import NotificationView from "../Common/NotificationView";
 
 
 export interface IMessage
@@ -35,12 +36,19 @@ export class MessageHandle implements IMessage
     onMessage(_header: RequestType, _netHead: NetHead, _callback: any)
     {
         let arr: any = [];
+        if (_netHead.status != 200)
+        {
+            NotificationView.Instance.showNotify('提示', _netHead.msg);
+            return;
+        }
         switch (_header)
         {
             case RequestType.login:
                 this.loginHandle(_netHead, _callback);
                 break;
             case RequestType.register:
+                GameStorage.clear();
+                GameStorage.setItem('firstLogin', 'first');
                 this.registerHandle(_netHead, _callback);
                 break;
             case RequestType.currency_info:
@@ -82,7 +90,7 @@ export class MessageHandle implements IMessage
                 this.OnHookInfos(_netHead, _callback);
                 break;
             case RequestType.onhook_carinfos:
-                this.OnHookCarList(_netHead,_callback);
+                this.OnHookCarList(_netHead, _callback);
                 break;
             case RequestType.onhook_upgrade:
                 if (_callback != null) _callback(_netHead);
@@ -95,11 +103,11 @@ export class MessageHandle implements IMessage
                 break;
             case RequestType.task_info:
                 if (_netHead.status != 200) return;
-                this.taskInfoHandle(_netHead,_callback);
+                this.taskInfoHandle(_netHead, _callback);
                 break;
             case RequestType.task_reward:
                 if (_netHead.status != 200) return;
-                this.taskRewardHandle(_netHead,_callback);
+                this.taskRewardHandle(_netHead, _callback);
                 break;
             case RequestType.onhook_levelUp:
                 if (_callback != null) _callback(_netHead);
@@ -243,7 +251,7 @@ export class MessageHandle implements IMessage
         {
             propList.push(Object.assign(new NetProps(), _netHead.data[i]));
         }
-        
+
         this.updateNetProps(propList);
         if (_callback != null) _callback(propList);
     }
@@ -350,16 +358,16 @@ export class MessageHandle implements IMessage
 
     taskInfoHandle(_netHead: NetHead, _callback: any)
     {
-        let info:NetMissionInfo=new NetMissionInfo();
-        info=Object.assign(new NetMissionInfo(),_netHead.data);
-        if(_callback!=null) _callback(info);
+        let info: NetMissionInfo = new NetMissionInfo();
+        info = Object.assign(new NetMissionInfo(), _netHead.data);
+        if (_callback != null) _callback(info);
     }
 
     taskRewardHandle(_netHead: NetHead, _callback: any)
     {
-        let info:NetMissionReward=new NetMissionReward();
-        info=Object.assign(new NetMissionReward(),_netHead.data);
-        if(_callback!=null) _callback(info);
+        let info: NetMissionReward = new NetMissionReward();
+        info = Object.assign(new NetMissionReward(), _netHead.data);
+        if (_callback != null) _callback(info);
     }
 
 

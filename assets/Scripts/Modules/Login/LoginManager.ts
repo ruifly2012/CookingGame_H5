@@ -81,6 +81,7 @@ export class LoginManager {
      */
     registerSuccess(ok:boolean,msg:string)
     {
+        
         GameStorage.setItemJson(AccountVo.ACCOUNT_INFO,this.accountInfo);
         if(ok==true)
         {

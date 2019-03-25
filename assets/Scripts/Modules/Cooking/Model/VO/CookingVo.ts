@@ -85,10 +85,16 @@ export class CookingVo {
             console.info('the ' + _location + ' menu is null ,' + this.menu[_location]);
             return null;
         }
-        if(this.menu[_location]._Amount!=0) this.allMenuAmount-=this.menu[_location]._Amount;
+        //if(this.menu[_location]._Amount!=0) this.allMenuAmount-=this.menu[_location]._Amount;
         this.allMenuAmount=MathTool.Abs(this.allMenuAmount);
-        this.allMenuAmount+=Number(_amount);
+        //this.allMenuAmount+=Number(_amount);
         this.menu[_location]._Amount=Number(_amount);
+        this.allMenuAmount=0;
+        this.menu.forEach((_menu) => {
+            console.log(_menu._Amount);
+            this.allMenuAmount += _menu._Amount;
+        });
+        console.log('上架: '+this.allMenuAmount);
     }
 
     /**
@@ -153,6 +159,7 @@ export class CookingVo {
     getMenusAmount(): number {
         let _amount: number = 0;
         this.menu.forEach((_menu) => {
+            console.log(_menu._Amount);
             if (_menu != null) _amount += _menu._Amount;
         });
         return _amount;
@@ -188,14 +195,16 @@ export class CookingVo {
             console.info('the ' + _location + ' menu is null ,' + this.menu[_location]);
             return ;
         }
-        //console.log('清除指定位置的菜'+this.menu[_location]._Name);
+        
         //这个脚本要放在这里吗 
         this.resetFoodMaterial(this.menu[_location]);
         let id:number=this.menu[_location]._ID;
         this.allMenuAmount-=this.menu[_location]._Amount;
         this.acutalMenuList.splice(this.acutalMenuList.indexOf(this.menu[_location]),1);
         this.menu[_location] = null;
+        console.log('清除指定位置的菜'+this.allMenuAmount);
         Facade.getInstance().sendNotification(CookingEvent.SOlDOUT_MENU,id);
+
     }
 
     /**

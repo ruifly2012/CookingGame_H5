@@ -40,6 +40,7 @@ export class HttpRequest
         this.httpRequest = new XMLHttpRequest();
         if (GameStorage.getItem(NetDefine.TOKEN) != null) this.token = GameStorage.getItem(NetDefine.TOKEN);
         this.authorization = NetDefine.AUTHORIZATION + this.token;
+        StatusCode.initErrorMsg();
         this.message = new MessageHandle();
     }
 
@@ -76,6 +77,7 @@ export class HttpRequest
         {
             if (this.readyState == 4)
             {
+                
                 //{"status":200,"msg":"OK","data":null,"ok":true}
                 if (this.status == 200)
                 {
@@ -86,7 +88,7 @@ export class HttpRequest
                 }
                 else
                 {
-                    NotificationView.Instance.showNotify('提示：','连接失败！');
+                    NotificationView.Instance.showNotify('提示：',StatusCode.responseError(requestType));
                     console.warn(StatusCode.GetCodeMsg(this.status));
                 }
             }
@@ -133,6 +135,7 @@ export class HttpRequest
                 }
                 else
                 {
+                    NotificationView.Instance.showNotify('提示：',StatusCode.responseError(requestType));
                     //console.log(StatusCode.GetCodeMsg(this.status));
                 }
             }
@@ -141,7 +144,7 @@ export class HttpRequest
                 //console.log(StatusCode.GetCodeMsg(this.readyState));
             }
         };
-        this.httpRequest.open('GET', this.getIP(requestType), true);
+        this.httpRequest.open('GET', NetDefine.HTTP_IP + requestType, true);
         this.httpRequest.withCredentials = true;
         this.authorization = GameStorage.getItem(NetDefine.TOKEN);
         this.httpRequest.setRequestHeader(NetDefine.AUTHORIZATION, this.authorization);
@@ -149,36 +152,7 @@ export class HttpRequest
         this.httpRequest.send(_data);
     }
 
-    /**
-     * 区分服务器IP
-     * @param requestType 
-     */
-    getIP(requestType: RequestType): string
-    {
-        switch (requestType)
-        {
-            case RequestType.login:
-            case RequestType.register:
-            case RequestType.props_info:
-            case RequestType.player_info:
-            case RequestType.character_info:
-            case RequestType.cook_info:
-            case RequestType.cook_quicken:
-            case RequestType.cook_reward:
-            case RequestType.cook_start:
-            case RequestType.currency_info:
-            case RequestType.player_finish_level:
-            case RequestType.player_level_list:
-            case RequestType.player_reward_level:
-            case RequestType.player_working_level:
-                return NetDefine.HTTP_IP + requestType;
-                break;
-            default:
-                return NetDefine.HTTP_IP + requestType;
-                break;
-        }
-    }
-
+   
     //#endregion
 
     stateChange(requestType: RequestType, _callback: any): any
@@ -213,13 +187,54 @@ export class HttpRequest
 
 export class StatusCode
 {
-    public errorMsgMap:Map<string,string>=new Map();
+    public static errorMsgMap:Map<string,string>=new Map();
 
     constructor()
     {
-        this.errorMsgMap.set(RequestType.login,'登录失败');
-        this.errorMsgMap.set(RequestType.register,'注册失败');
-        this.errorMsgMap.set(RequestType.character_info,'人物获取失败');
+        
+        
+    }
+
+    public static initErrorMsg()
+    {
+        StatusCode.errorMsgMap.set(RequestType.login,'登录失败');
+        StatusCode.errorMsgMap.set(RequestType.register,'注册失败');
+        StatusCode.errorMsgMap.set(RequestType.character_info,'人物获取失败');
+        StatusCode.errorMsgMap.set(RequestType.character_addcharacter,'添加人物失败');
+        StatusCode.errorMsgMap.set(RequestType.character_uplevel,'升级失败');
+        StatusCode.errorMsgMap.set(RequestType.character_upadvance_level,'升阶失败');
+        StatusCode.errorMsgMap.set(RequestType.cook_info,'做菜信息获取失败');
+        StatusCode.errorMsgMap.set(RequestType.cook_quicken,'钻石加速做菜失败');
+        StatusCode.errorMsgMap.set(RequestType.cook_reward,'做菜奖励领取失败');
+        StatusCode.errorMsgMap.set(RequestType.cook_start,'做菜效验失败');
+        StatusCode.errorMsgMap.set(RequestType.currency_info,'货币更新失败');
+        StatusCode.errorMsgMap.set(RequestType.draw_treasure,'抽奖失败');
+        StatusCode.errorMsgMap.set(RequestType.email_info,'邮件获取失败');
+        StatusCode.errorMsgMap.set(RequestType.email_new_number,'新邮件获取失败');
+        StatusCode.errorMsgMap.set(RequestType.email_update,'邮件更新失败');
+        StatusCode.errorMsgMap.set(RequestType.player_level_list,'关卡信息获取失败');
+        StatusCode.errorMsgMap.set(RequestType.player_finish_level,'关卡完成提交失败');
+        StatusCode.errorMsgMap.set(RequestType.player_info,'玩家信息获取失败');
+        StatusCode.errorMsgMap.set(RequestType.player_acceleration,'关卡钻石失败');
+        StatusCode.errorMsgMap.set(RequestType.player_reward_level,'关卡奖励领取失败');
+        StatusCode.errorMsgMap.set(RequestType.player_working_level,'开始关卡提交失败');
+        StatusCode.errorMsgMap.set(RequestType.props_info,'道具信息获取失败');
+        StatusCode.errorMsgMap.set(RequestType.onhook_working,'挂机提交失败');
+        StatusCode.errorMsgMap.set(RequestType.task_info,'任务信息获取失败');
+        StatusCode.errorMsgMap.set(RequestType.task_reward,'任务奖励领取失败');
+        StatusCode.errorMsgMap.set(RequestType.treasure_info,'宝箱信息获取失败');
+    }
+
+    public static responseError(requestType:RequestType)
+    {
+        if(this.errorMsgMap.has(requestType))
+        {
+            return this.errorMsgMap.get(requestType);
+        }
+        else
+        {
+            return requestType+'-请求失败';
+        }
     }
 
 
