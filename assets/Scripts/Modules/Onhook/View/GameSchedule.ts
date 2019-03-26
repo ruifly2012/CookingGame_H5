@@ -15,7 +15,7 @@ export default class GameSchedule extends cc.Component {
             }, 1, times, 0.01);
         }else{
             this.LabelTet(times);
-        }  
+        }
     }
 
     LabelTet(t:number){

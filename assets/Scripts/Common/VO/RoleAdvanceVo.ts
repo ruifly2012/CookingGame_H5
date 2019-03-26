@@ -13,6 +13,8 @@ export class RoleAdvanceVo
     public _PropID:number=0;
     /** 道具数量 */
     public _PropNum:number=0;
+    /** 消耗金币 */
+    public _Gold:number=0;
 
     public constructor()
     {

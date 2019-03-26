@@ -24,7 +24,7 @@ import { ServerSimulator } from "../../Missions/ServerSimulator";
 import { OnHookProtocal, HookLevelInfo } from "../../Missions/MissionManager";
 import { HttpRequest } from "../../../NetWork/HttpRequest";
 import { RequestType } from "../../../NetWork/NetDefine";
-import { NetOnHookPanel, NetCarinfo } from "../../../NetWork/NetMessage/NetOnHookInfo";
+import { NetOnHookPanel, NetCarinfo, selectWorkingByOnHook, NetOnhookInquire } from "../../../NetWork/NetMessage/NetOnHookInfo";
 import { NetHead } from "../../../NetWork/NetMessage/NetHead";
 
 const { ccclass, property } = cc._decorator;
@@ -114,6 +114,7 @@ export default class OnhookPanelView extends cc.Component {
     InterfacialStar(callback:any=null) {
         console.log ('刷新挂机主界面');
         var self=this;
+        HttpRequest.getInstance().requestPost(RequestType.character_info,null);
         HttpRequest.getInstance().requestGet(RequestType.onhook_infos, function(ok:NetOnHookPanel){
             self.OnHookPanelData=ok;
             self.OnclickAddEvten();
@@ -134,8 +135,8 @@ export default class OnhookPanelView extends cc.Component {
                    b.on(System_Event.MOUSE_CLICK, self.onRegister, self);//按钮事件
                    self.starActi(r.getChildByName('star black'), i);
                    if (ok.OnHookPanelInfoArray[i].onHookStatus==2||ok.OnHookPanelInfoArray[i].onHookStatus==3){
-                    var sty=DataManager.getInstance().OnhookMap.get(ok.OnHookPanelInfoArray[i].onHookId)._Name+TableName.OnHook;
-                    GameManager.TimeEvent(sty,ok.OnHookPanelInfoArray[i].onHookWaitTime);
+                    var sty:string=DataManager.getInstance().OnhookMap.get(ok.OnHookPanelInfoArray[i].onHookId)._Name+TableName.OnHook;
+                    GameManager.TimeEvent(sty,ok.OnHookPanelInfoArray[i].onHookWaitTime==null?0:ok.OnHookPanelInfoArray[i].onHookWaitTime);
                     b.getChildByName('label').getComponent(GameSchedule).Starschedule(sty);
                    }
                 }
@@ -320,7 +321,7 @@ export default class OnhookPanelView extends cc.Component {
         }
         if (sty > 0 || sty == 0) {
             this.OnProxy.HookData.get(this.Onhooks._Name).TotalAttribute(this.Onhooks._Attribute);
-            this.SeppdUpPanel(dalt);
+            this.SeppdUpPanel(id);
         } else {
             /**面板初始化 */
             this.character_bj.active = true;
@@ -372,46 +373,47 @@ export default class OnhookPanelView extends cc.Component {
     }
 
     /**显示加速面板 */
-    SeppdUpPanel(dalt: Array<OnHook>) {
-        console.log ('挂机表长度：'+dalt.length+'当前面板等级为：'+this.PanelLevel);
-        this.SpeedUp.active = true;
-        this.Upcontent.destroyAllChildren();
-        this.SpeedUp.getChildByName('Explore_BtnIng').active = true;
-        this.SpeedUp.getChildByName('Explore_End').active = false;
-        var sr = GameManager.TimeEvent(this.Onhooks._Name + TableName.OnHook);
-        this.SpeedUp.getChildByName('Explore_BtnIng').getChildByName('SpeedUp').getChildByName('Label').getComponent(cc.Label).string = Math.ceil(sr / Number(DataManager.getInstance().GlobaVar.get(1)._Value)).toString();
-        this.SpeedUp.getChildByName('Explore_BtnIng').getChildByName('Timelabel').getComponent(cc.Label).string = GameManager.GetTimeLeft2BySecond(sr);
+    SeppdUpPanel(id: number) {
         var self = this;
-        var total=self.OnProxy.HookData.get(self.Onhooks._Name).total;
-        ResourceManager.getInstance().loadResources(ConfigurationInformation.ExporePanel_MaterialsGrid_prefab, cc.Prefab, function (Prefab) {
-            for (let index = 0; index < dalt.length; index++) {
-                if (total>=dalt[index]._ConditionValue&&self.PanelLevel > index) {
+        this.OnProxy.OnHookWorking(id, function (_netHead: selectWorkingByOnHook) {
+            console.log('剩余挂机时间：' + _netHead.waitTime+'  '+_netHead.rewardArray[0].id+'   '+_netHead.rewardArray[0].num);
+            self.SpeedUp.active = true;
+            self.Upcontent.destroyAllChildren();
+            var BtnIng = self.SpeedUp.getChildByName('Explore_BtnIng');
+            var BtnEnd = self.SpeedUp.getChildByName('Explore_End');
+            BtnIng.active = true;
+            BtnEnd.active = false;
+            var SpeedUpLabel = BtnIng.getChildByName('SpeedUp').getChildByName('Label').getComponent(cc.Label);
+            var Timelabel = BtnIng.getChildByName('Timelabel').getComponent(cc.Label);
+            SpeedUpLabel.string = Math.ceil(_netHead.waitTime / Number(DataManager.getInstance().GlobaVar.get(1)._Value)).toString();
+            Timelabel.string = GameManager.GetTimeLeft2BySecond(_netHead.waitTime);
+            ResourceManager.getInstance().loadResources(ConfigurationInformation.ExporePanel_MaterialsGrid_prefab, cc.Prefab, function (Prefab) {
+                for (let index = 0; index < _netHead.rewardArray.length; index++) {
                     var grid: cc.Node = ObjectTool.instanceWithPrefab('H_' + index.toString(), Prefab, self.Upcontent);
-                    var Roadster=DataManager.getInstance().FoodMaterialMap.get(dalt[index]._FoodMaterial).Type==DataManager.getInstance().CarMap.get(self.OnProxy.HookData.get(self.Onhooks._Name).HB._Roadster)._Skill?1+DataManager.getInstance().CarMap.get(self.OnProxy.HookData.get(self.Onhooks._Name).HB._Roadster)._Value/100:1;//当前食材是否获得车加成
-                    grid.getComponent(MaterialsGridData).SteMainDate(dalt[index]._FoodMaterial, dalt[index]._FoodNumber * self.OnProxy.HookData.get(self.Onhooks._Name).HB._Time*Roadster);
+                    grid.getComponent(MaterialsGridData).SteMainDate(_netHead.rewardArray[index].id, _netHead.rewardArray[index].num);
                 }
-            }
-            if( self.PanelLevel>=5){
-                self.Upcontent.setPosition(45,0);
-            }else{
-                self.Upcontent.setPosition(0,0);
+                // if (self.PanelLevel >= 5) {
+                //     self.Upcontent.setPosition(45, 0);
+                // } else {
+                //     self.Upcontent.setPosition(0, 0);
+                // }
+            });
+            /**展示倒计时或者已完成界面 */
+            if (_netHead.waitTime > 0) {
+                self.schedule(function () {
+                    var sty = GameManager.TimeEvent(self.Onhooks._Name + TableName.OnHook);
+                    Timelabel.string = GameManager.GetTimeLeft2BySecond(sty);
+                    SpeedUpLabel.string = Math.ceil(sty / Number(DataManager.getInstance().GlobaVar.get(1)._Value)).toString();
+                    if (sty == 0) {
+                        BtnIng.active = false;
+                        BtnEnd.active = true;
+                    }
+                }, 1, _netHead.waitTime, 0);
+            } else {
+                BtnIng.active = false;
+                BtnEnd.active = true;
             }
         });
-        /**展示倒计时或者已完成界面 */
-        if (GameManager.TimeEvent(this.Onhooks._Name + TableName.OnHook) > 0) {
-            this.schedule(function () {
-                var sty = GameManager.TimeEvent(this.Onhooks._Name + TableName.OnHook);
-                this.SpeedUp.getChildByName('Explore_BtnIng').getChildByName('Timelabel').getComponent(cc.Label).string = GameManager.GetTimeLeft2BySecond(sty);
-                this.SpeedUp.getChildByName('Explore_BtnIng').getChildByName('SpeedUp').getChildByName('Label').getComponent(cc.Label).string = Math.ceil(sty / Number(DataManager.getInstance().GlobaVar.get(1)._Value)).toString();
-                if (sty == 0) {
-                    this.SpeedUp.getChildByName('Explore_BtnIng').active = false;
-                    this.SpeedUp.getChildByName('Explore_End').active = true;
-                }
-            }, 1, GameManager.TimeEvent(this.Onhooks._Name + TableName.OnHook), 0);
-        } else {
-            this.SpeedUp.getChildByName('Explore_BtnIng').active = false;
-            this.SpeedUp.getChildByName('Explore_End').active = true;
-        }
     }
 
     /**按照ID从大到小的顺序排序 */
@@ -582,44 +584,43 @@ export default class OnhookPanelView extends cc.Component {
 
 
     /**打开等级提升面板，并初始化界面数据 */
-    PanelLevelUp(){
-        var self=this;
-        var MapLevelUp=this.character_bj.parent.getChildByName('MapLevelUp');//等级提升面板
-        var data=this.OnProxy.HookData.get(this.Onhooks._Name);//获取当前面板数据操作类
-        var Up=MapLevelUp.getChildByName('bj').getChildByName('Up');//显示数据组件的父类
-        var End=MapLevelUp.getChildByName('bj').getChildByName('End');//
-        var hb = DataManager.getInstance().OnhookMap.get(DataManager.getInstance().OnhookMap.has(this.Onhooks._ID+1)?this.Onhooks._ID+1:this.Onhooks._ID);//获取下一挂机关卡数据
-        console.log ('data.OnHookID:'+data.OnHookID+'  ');
-        console.dir('data:'+data.HB);
-        this.OnProxy.OnHookLevelUpCondition(self.Onhooks._ID,function(_netHead: NetHead){
-            if(data.HB._Level==5){
-                MapLevelUp.active=true;
-                End.active=true;
-                Up.active=false;
-            }else{
-                MapLevelUp.active=true;
-                Up.active=true;
-                End.active=false;
-                Up.getChildByName('start').getComponent(cc.Label).string=data.HB._Level.toString();
-                Up.getChildByName('end').getComponent(cc.Label).string=(data.HB._Level+1).toString();
-                if (_netHead.ok==false)
-                {
-                    Up.getChildByName('richtext').getComponent(cc.RichText).string='<color=#765027>通关'+DataManager.getInstance().OnhookMap.get(hb._UnlockID)._Name+'('+(hb._UnlockID)+')'+'关卡</c><color=#e03c3c>'+'（未完成）'+'</color>';
-                    MapLevelUp.getChildByName('bj').getChildByName('Up').getChildByName('LevelUp').getComponent(cc.Button).enabled=false;
-                }else{
-                    Up.getChildByName('richtext').getComponent(cc.RichText).string='';
-                    MapLevelUp.getChildByName('bj').getChildByName('Up').getChildByName('LevelUp').getComponent(cc.Button).enabled=true;
+    PanelLevelUp() {
+        var self = this;
+        var MapLevelUp = this.character_bj.parent.getChildByName('MapLevelUp');//等级提升面板
+        var data = this.OnProxy.HookData.get(this.Onhooks._Name);//获取当前面板数据操作类
+        var Up = MapLevelUp.getChildByName('bj').getChildByName('Up');//显示数据组件的父类
+        var End = MapLevelUp.getChildByName('bj').getChildByName('End');//
+        var hb = DataManager.getInstance().OnhookMap.get(DataManager.getInstance().OnhookMap.has(this.Onhooks._ID + 1) ? this.Onhooks._ID + 1 : this.Onhooks._ID);//获取下一挂机关卡数据
+        this.OnProxy.OnHookLevelUpCondition(self.Onhooks._ID, function (_netHead: NetOnhookInquire) {
+            if (data.HB._Level == 5) {
+                MapLevelUp.active = true;
+                End.active = true;
+                Up.active = false;
+            } else {
+                MapLevelUp.active = true;
+                Up.active = true;
+                End.active = false;
+                Up.getChildByName('start').getComponent(cc.Label).string = data.HB._Level.toString();
+                Up.getChildByName('end').getComponent(cc.Label).string = (data.HB._Level + 1).toString();
+                var rich = Up.getChildByName('richtext').getComponent(cc.RichText);
+                var LevelUp = MapLevelUp.getChildByName('bj').getChildByName('Up').getChildByName('LevelUp').getComponent(cc.Button);
+                if (_netHead.ok == false) {
+                    rich.string = '<color=#765027>通关' + _netHead.levelName + '关卡</c><color=#e03c3c>' + '（未完成）' + '</color>';
+                    LevelUp.enabled = false;
+                } else {
+                    rich.string = '';
+                    LevelUp.enabled = true;
                 }
-                Up.getChildByName('LevelUp').getChildByName('iconlabel').getComponent(cc.Label).string=DataManager.getInstance().OnhookMap.get(data.OnHookID)._Consume.get(10001).toString();
-                Up.getChildByName('dropout').getComponent(cc.Sprite).spriteFrame=AssetManager.getInstance().getSpriteFromAtlas(DataManager.getInstance().PropVoMap.get(hb._FoodMaterial)._ResourceName);
+                Up.getChildByName('LevelUp').getChildByName('iconlabel').getComponent(cc.Label).string = DataManager.getInstance().OnhookMap.get(data.OnHookID)._Consume.get(10001).toString();
+                Up.getChildByName('dropout').getComponent(cc.Sprite).spriteFrame = AssetManager.getInstance().getSpriteFromAtlas(DataManager.getInstance().PropVoMap.get(hb._FoodMaterial)._ResourceName);
             }
-            var content= MapLevelUp.getChildByName('bj').getChildByName('Upscrollview').getChildByName('view').getChildByName('content');
-                content.removeAllChildren();
-                ResourceManager.getInstance().loadResources('prefabs/ui_panel/Materials_Grid_Mini',cc.Prefab,function(prefab){
-                    var obj=ObjectTool.instanceWithPrefab('x',prefab,content);
-                    obj.getComponent(MaterialsGridData).SteMainDate(Number(self.Onhooks._Rune),-1);
-                });
-        }); 
+            var content = MapLevelUp.getChildByName('bj').getChildByName('Upscrollview').getChildByName('view').getChildByName('content');
+            content.removeAllChildren();
+            ResourceManager.getInstance().loadResources('prefabs/ui_panel/Materials_Grid_Mini', cc.Prefab, function (prefab) {
+                var obj = ObjectTool.instanceWithPrefab('x', prefab, content);
+                obj.getComponent(MaterialsGridData).SteMainDate(Number(self.Onhooks._Rune), -1);
+            });
+        });
     }
     //#endregion
 }

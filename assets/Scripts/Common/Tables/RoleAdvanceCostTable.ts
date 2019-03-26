@@ -24,6 +24,7 @@ export class RoleAdvanceCostTable implements ITable
             vo.__AdvanceLevel = Number(obj['阶级']);
             vo._PropID = Number(obj['消耗'].split(',')[0]);
             vo._PropNum = Number(obj['消耗'].split(',')[1]);
+            vo._Gold = Number(obj['金币']);
             let id: number = Number(obj['人物进阶消耗方案'] + obj['阶级']);
             tableMap.set(id, vo);
         }

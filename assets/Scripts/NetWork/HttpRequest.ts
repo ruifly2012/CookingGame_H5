@@ -220,6 +220,7 @@ export class StatusCode
         StatusCode.errorMsgMap.set(RequestType.player_working_level,'开始关卡提交失败');
         StatusCode.errorMsgMap.set(RequestType.props_info,'道具信息获取失败');
         StatusCode.errorMsgMap.set(RequestType.onhook_working,'挂机提交失败');
+        StatusCode.errorMsgMap.set(RequestType.onhook_selectWorking,'挂机详情获取失败');
         StatusCode.errorMsgMap.set(RequestType.task_info,'任务信息获取失败');
         StatusCode.errorMsgMap.set(RequestType.task_reward,'任务奖励领取失败');
         StatusCode.errorMsgMap.set(RequestType.treasure_info,'宝箱信息获取失败');

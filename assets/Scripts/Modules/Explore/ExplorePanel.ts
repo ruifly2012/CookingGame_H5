@@ -277,11 +277,12 @@ export default class ExplorePanel extends cc.Component {
             case 'SpeedUp ':
                 var AJadeDisc = Number(this.Explore_BtnIng.getChildByName('SpeedUp ').getChildByName('Label').getComponent(cc.Label).string);
                 if (CurrencyManager.getInstance().Money >= AJadeDisc) {
-                    CurrencyManager.getInstance().Money -= AJadeDisc;
-                    this.Close(false);   
-                    this.Explore_BtnIng.active = false;
-                    this.Explore_End.active = true;
-                    Ep.DiamondAcceleration(this.ID);//钻石加速
+                    Ep.DiamondAcceleration(this.ID,function(){
+                        CurrencyManager.getInstance().Money -= AJadeDisc;
+                        this.Close(false);   
+                        this.Explore_BtnIng.active = false;
+                        this.Explore_End.active = true;
+                    });//钻石加速
                 } else {
                     Log.ShowLog('玉璧不够');
                 }

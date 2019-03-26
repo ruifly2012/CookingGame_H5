@@ -12,7 +12,7 @@ import { CurrencyManager } from "../Managers/ CurrencyManager";
 import { GameCommand } from "../Events/GameCommand";
 import { DataManager } from "../Managers/DataManager";
 import { NetExplorePanel, NetExploreData } from "./NetMessage/NetExploreInfo";
-import { NetOnHookPanel, NetOnHookPanelInfo, NetCarinfo, Carinfo } from "./NetMessage/NetOnHookInfo";
+import { NetOnHookPanel, NetOnHookPanelInfo, NetCarinfo, Carinfo, selectWorkingByOnHook, selectWorkingBy, NetOnhookInquire } from "./NetMessage/NetOnHookInfo";
 import { NetDrawOutInfo } from "./NetMessage/NetTreasureInfo";
 import { NetMissionInfo, NetMissionReward } from "./NetMessage/NetMissionInfo";
 import { LoginEvent } from "../Events/LoginEvent";
@@ -86,6 +86,9 @@ export class MessageHandle implements IMessage
             case RequestType.player_level_list:
                 this.NetExploreHandle(_netHead, _callback);
                 break;
+            case RequestType.player_acceleration:
+            if (_callback != null) _callback(_netHead);
+                break;
             case RequestType.onhook_infos:
                 this.OnHookInfos(_netHead, _callback);
                 break;
@@ -94,6 +97,9 @@ export class MessageHandle implements IMessage
                 break;
             case RequestType.onhook_upgrade:
                 if (_callback != null) _callback(_netHead);
+                break;
+            case RequestType.onhook_selectWorking:
+                this.selectWorking(_netHead, _callback);
                 break;
             case RequestType.treasure_info:
                 this.treasureInfoHandle(_netHead, _callback);
@@ -110,7 +116,7 @@ export class MessageHandle implements IMessage
                 this.taskRewardHandle(_netHead, _callback);
                 break;
             case RequestType.onhook_levelUp:
-                if (_callback != null) _callback(_netHead);
+                this.OnHookInquire(_netHead,_callback);
                 break;
             default:
                 if (_callback != null) _callback(_netHead.data);
@@ -118,7 +124,29 @@ export class MessageHandle implements IMessage
         }
     }
 
+    /** 查询是否可以升级*/
+    OnHookInquire(_netHead: NetHead, _callback: any){
+        if (_netHead.data == null) return;
+        let ok: NetOnhookInquire = new NetOnhookInquire();
+        ok.levelId=_netHead.data.levelId;
+        ok.levelName=_netHead.data.levelName;
+        ok.ok=_netHead.data.ok;
+        ok.msg=_netHead.data.msg;
+        if (_callback != null) _callback(ok);
+    }
 
+
+    /**获取挂机进行中的数据 */
+    selectWorking(_netHead: NetHead, _callback: any){
+        if (_netHead.data == null) return;
+        let ok: selectWorkingByOnHook = new selectWorkingByOnHook();
+        for (let i = 0; i < _netHead.data.reward.length; i++)
+        {
+            ok.rewardArray.push(Object.assign(new selectWorkingBy(), _netHead.data.reward[i]));
+        }
+        ok.waitTime=_netHead.data.waitTime;
+        if (_callback != null) _callback(ok);
+    }
 
     /**挂机面板车信息 */
     OnHookCarList(_netHead: NetHead, _callback: any)

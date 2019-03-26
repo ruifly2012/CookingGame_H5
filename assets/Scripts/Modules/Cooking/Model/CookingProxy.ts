@@ -459,7 +459,7 @@ export class CookingProxy extends Proxy
 
     public setCurrMenuNum(_val: number)
     {
-        //Log.Info('设置菜谱数量---', this.currCookingSeat, this.currMenuLocation, _val);
+        //Log.Info('设置菜谱数量---',this.cookingMap.get(this.currCookingSeat).menuNum[this.currMenuLocation],this.currCookingSeat, this.currMenuLocation, _val);
         this.cookingMap.get(this.currCookingSeat).menuNum[this.currMenuLocation] = _val;
         //this.cookingMap.get(this.currCookingSeat).menu[this.currMenuLocation]._Amount = _val;
         this.cookingMap.get(this.currCookingSeat).setMenuAmount(this.currMenuLocation, _val);
@@ -478,7 +478,6 @@ export class CookingProxy extends Proxy
             //Log.Info('食材',this.menuProxy.getFoodMaterial(id).Name,this.menuProxy.getFoodMaterial(id)._Sum);
             let num = Math.floor(this.menuProxy.getFoodMaterial(id).Amount / value);
             arr.push(num);
-
         });
         let min: number = MathTool.Abs(arr.sort((a, b) => { return a - b; })[0]);
         //Log.Info('min number ',min);

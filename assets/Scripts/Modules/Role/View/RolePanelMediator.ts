@@ -108,7 +108,7 @@ export class RolePanelMediator extends Mediator
         let icon: cc.SpriteFrame = this.proxyData.getSpriteFromAtlas(iconName);
         let id: number = this.proxyData.GetRoleFromID(Number(this.currRole._ID))._Skill;
         let skill: SkillDataBase = this.dataManager.SkillVarMap.get(Number(id));
-        this.getViewComponent().showAdvancePanel(icon, String(this.proxyData.upgradeLevelCost(this.currRole._ID)), String(vo._PropNum), skill._Describe);
+        this.getViewComponent().showAdvancePanel(icon, vo._Gold.toString(), String(vo._PropNum), skill._Describe);
     }
 
     /**
@@ -207,7 +207,7 @@ export class RolePanelMediator extends Mediator
             }
             this.roleItemList.push(_node.getComponent(RoleItemView));
         };
-
+        this.updateAdvanceInfo();
     }
 
     /**
@@ -296,7 +296,7 @@ export class RolePanelMediator extends Mediator
         let actualPropNum: number = prop._Amount;
         let iconName = prop._ResourceName;
         let icon: cc.SpriteFrame = this.proxyData.getSpriteFromAtlas(iconName);
-        this.getViewComponent().setAdvanceTxt(String(this.proxyData.upgradeLevelCost(this.currRole._ID)), icon, actualPropNum + '/' + vo._PropNum);
+        this.getViewComponent().setAdvanceTxt(vo._Gold.toString(), icon, actualPropNum + '/' + vo._PropNum);
         this.showRoleDetailInfo(this.getViewComponent().currRoleID);
         if (actualPropNum < vo._PropNum) this.getViewComponent().disEnableAdvance();
         else this.getViewComponent().enableAdvance();

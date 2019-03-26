@@ -10,6 +10,7 @@ import { HttpRequest } from "../../../NetWork/HttpRequest";
 import { RequestType } from "../../../NetWork/NetDefine";
 import { NetStartExplore, NetEndExplore } from "../../../NetWork/NetMessage/NetExploreInfo";
 import { GameManager } from "../../../Managers/GameManager";
+import { NetHead } from "../../../NetWork/NetMessage/NetHead";
 
 
 export default class ExploreProxy extends Proxy {
@@ -41,7 +42,7 @@ export default class ExploreProxy extends Proxy {
     }
 
     /**
-     * 哪些人物开始了哪个任务
+     * 开始任务（主线或者直线）
      * @param array 人物数据，默认按照1-6的顺序
      * @param id 任务ID
      */
@@ -52,20 +53,21 @@ export default class ExploreProxy extends Proxy {
         for (let i = 0; i < array.length; i++) {
             ne.playerCharacterIds.push(array[i]._ID);
         }
-        console.log ('开启了任务,任务ID为：'+id+' 执行任务的人数是：'+array.length);
         HttpRequest.getInstance().requestPost(RequestType.player_working_level, null, JSON.stringify(ne))
         return false;
     }
 
     /**钻石加速 */
-    DiamondAcceleration(leveId:number){
+    DiamondAcceleration(leveId:number,bacllback:any=null){
         this.TimeEvent(leveId,0);
         let fd:FormData=new FormData();
         fd.append('levelId',leveId.toString());
-        HttpRequest.getInstance().requestPost(RequestType.player_acceleration, null, fd,false);
+        HttpRequest.getInstance().requestPost(RequestType.player_acceleration, function(_netHead: NetHead){
+            if (bacllback!=null&&_netHead.ok==true){bacllback(_netHead);};
+        }, fd,false);
     }
-
-    /**获取或者设置关于主线任务有关的时间 */
+3
+    /**获取或者设置关于主线任务有关的时间(用于本地) */
     TimeEvent(id: number, time?: number){
         return GameManager.TimeEvent(TableName.Level + id.toString(),time);
     }

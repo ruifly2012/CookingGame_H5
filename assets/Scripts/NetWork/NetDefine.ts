@@ -81,6 +81,8 @@ export enum RequestType {
     onhook_upgrade = '/playerOnHook/upgradeOnHook',
     /**判断挂机关卡升级数据条件是否满足 */
     onhook_levelUp = '/playerOnHook/selectUpgradeOnHookCondition',
+    /**获取当前挂机获得的食材及数量，剩余挂机时长 */
+    onhook_selectWorking='/playerOnHook/selectWorkingByOnHook',
     /** 获取邮箱列表 */
     email_info='/playerEmail/playerEmails',
     /** 更新邮箱领取状态 */

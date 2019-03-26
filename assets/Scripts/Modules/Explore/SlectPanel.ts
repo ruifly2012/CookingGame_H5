@@ -53,6 +53,7 @@ export default class SlectPanel extends cc.Component {
         this.Expedition.parent.getChildByName('10001').getComponent(cc.Label).string = '金币：' + CurrencyManager.getInstance().Coin;
         this.Expedition.parent.getChildByName('10002').getComponent(cc.Label).string = '钻石：' + CurrencyManager.getInstance().Money;
         var self=this;
+        HttpRequest.getInstance().requestPost(RequestType.character_info,null);
         HttpRequest.getInstance().requestGet(RequestType.player_level_list, function(np:NetExplorePanel){
             self.NP=np;
              /**主线任务 */

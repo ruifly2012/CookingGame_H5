@@ -67,7 +67,6 @@ export class GameManager
      * 设置或者获取基于时间的任务，返回类型：null表示未进行过该任务，0则表示任务完成，-1表示已解锁，否则返回任务完成剩余时间（秒数）
      * @param ID 任务Id，string类型
      * @param time 任务时间
-     * @param isOn 是否是任务表里的任务
      */
     public static TimeEvent(ID: string, time?: number): number
     {

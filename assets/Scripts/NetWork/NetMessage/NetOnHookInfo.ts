@@ -28,6 +28,30 @@ export class NetOnHookPanelInfo {
     }
 }
 
+/**获取挂机进行中的数据 */
+export class selectWorkingByOnHook{
+  /**获取的道具数组（） */
+  rewardArray:Array<selectWorkingBy>=[];
+  /**当前挂机剩余事件 */
+  waitTime:number=0;
+  constructor(){
+        
+}
+}
+
+/**当前挂机进行中的数据（单个获得的道具） */
+export class selectWorkingBy{
+    /**道具数量 */
+    num:number=0;
+    /**道具ID */
+    id:number=0;
+    propsType:number=0;
+    foreignId:number=0;
+    constructor(){
+
+    }
+}
+
 /**当前挂机面板数据（服务端 -> 客户端） */
 export class NetOnHookPanel{
     /**面板数据数组（） */
@@ -53,6 +77,16 @@ export class NetOnHookPanel{
         }
         return null;
     }
+}
+
+/**是否满足升级条件 */
+export class NetOnhookInquire{
+    msg:string='';
+    ok:boolean=false;
+    /**需要 通关的  关卡 名字 */
+    levelName:string='';
+    /**需要 通关的  关卡 id */
+    levelId:number=0;
 }
 
 /**车面板信息 （服务端 -> 客户端）*/

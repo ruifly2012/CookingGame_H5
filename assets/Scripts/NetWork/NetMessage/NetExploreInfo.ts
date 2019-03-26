@@ -6,6 +6,7 @@ export  class NetExploreInfo {
 
 }
 
+
 /**任务信息（服务端 -> 客户端 ） */
 export class NetExploreTask{
     /**当前任务ID */

@@ -81,6 +81,7 @@ export class CookingVo {
      * @param _amount 菜的数量
      */
     public setMenuAmount(_location:number,_amount:number){
+        if(this.menu==null) return ;
         if (this.menu[_location] == null) {
             console.info('the ' + _location + ' menu is null ,' + this.menu[_location]);
             return null;
@@ -91,7 +92,7 @@ export class CookingVo {
         this.menu[_location]._Amount=Number(_amount);
         this.allMenuAmount=0;
         this.menu.forEach((_menu) => {
-            console.log(_menu._Amount);
+            if(_menu==null) return ;
             this.allMenuAmount += _menu._Amount;
         });
         console.log('上架: '+this.allMenuAmount);

@@ -13,7 +13,7 @@ import { ServerSimulator } from "../../Missions/ServerSimulator";
 import { OnHookProtocal } from "../../Missions/MissionManager";
 import { HttpRequest } from "../../../NetWork/HttpRequest";
 import { RequestType } from "../../../NetWork/NetDefine";
-import { NetOnHookGoto, NetOnHookAward } from "../../../NetWork/NetMessage/NetOnHookInfo";
+import { NetOnHookGoto, NetOnHookAward, selectWorkingByOnHook, NetOnhookInquire } from "../../../NetWork/NetMessage/NetOnHookInfo";
 import { NetHead } from "../../../NetWork/NetMessage/NetHead";
 
 /**
@@ -106,7 +106,7 @@ export default class OnHookProxy extends Proxy {
     //    this.HookData.get(name).HB.SetOnHookData();
     // }
 
-    /**
+    /**onHookId
      * 获取当前挂机面板拥有的人数
      * @param id
      */
@@ -140,10 +140,20 @@ export default class OnHookProxy extends Proxy {
         },fd,false);
     }
 
+    /**判断关卡等级升级条件是否满足 */
     OnHookLevelUpCondition(id:number,callback:any=null){
         let fd:FormData=new FormData();
         fd.append('onHookId',id.toString());
-        HttpRequest.getInstance().requestPost(RequestType.onhook_levelUp,function(_netHead: NetHead){
+        HttpRequest.getInstance().requestPost(RequestType.onhook_levelUp,function(_netHead: NetOnhookInquire){
+            if (callback!=null){callback(_netHead);}
+        },fd,false);
+    }
+
+    /**获取当前挂机剩余时长和预计获得食材及数量 */
+    OnHookWorking(id:number,callback:any=null){
+        let fd:FormData=new FormData();
+        fd.append('onHookId',id.toString());
+        HttpRequest.getInstance().requestPost(RequestType.onhook_selectWorking,function(_netHead:selectWorkingByOnHook){
             if (callback!=null){callback(_netHead);}
         },fd,false);
     }
